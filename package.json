@@ -1,0 +1,10 @@
+{
+  "name" : "tagscii",
+  "description" : "play tag in ascii",
+  "version" : "0.0.1",
+  "private" : true,
+  "dependencies" : {
+    "express": "3.x",
+    "ws":"0.x"
+  }
+}
