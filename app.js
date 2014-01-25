@@ -11,7 +11,9 @@ var S = { // SETTINGS
   //GAMEPLAY DEFINES
   hideJaugeThreshold: 4.0,
   hideJaugeMaxValue:	5.0,
-  hideJaugeStep:			0.1
+  hideJaugeStep:			0.1,
+	scoreMax:						5,
+	gameOverTimer:			5000 //ms
 };
 
 if (process.argv.length === 3) {
@@ -30,6 +32,8 @@ levels.push("LVL_3.js");
 levels.push("LVL_4.js");
 levels.push("LVL_5.js");
 levels.push("LVL_6.js");
+
+var won = false;
 
 function genMap() {
   var map = require("./" + levels[Math.floor(Math.random()*levels.length)]).level;
@@ -172,6 +176,54 @@ function updateHideJauge(client) {
 	}
 }
 
+function newGame() {
+	map = genMap();
+	won = false;
+	
+  for(var c in clients) {
+		var client = clients[c];
+		client.score = 0;
+		client.last.t = 'P';
+		client.last.x = Math.floor(Math.random()*S.W);
+		client.last.y = Math.floor(Math.random()*S.H);
+		client.last.u = 0;
+		client.last.v = 0;
+		client.last.hJ = 0;
+		delete client.last.cat;
+  }
+
+  addCat();
+
+  var jMap = {
+    type: "end",
+    map: map,
+    w: S.W,
+    h: S.H,
+  };
+	broadcast(jMap);
+	
+  var j = { type : "all",
+            lst : [] };
+	for(var c in clients) {
+		if (clients[c].last !== undefined && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
+			j.lst.push(clients[c].last);
+		}
+	}
+	broadcast(j);
+	
+  var jScores = { type: "scores",
+            lst : [] };
+  for (var c in clients) {
+    var cat = false;
+    if (clients[c].last.cat === true) {
+      cat = true;
+    }
+    jScores.lst.push({ name: clients[c].name, score: 0, cat:cat });
+  }
+	
+  broadcast(jScores);
+}
+
 setInterval(function() {
   var j = { type: "scores",
             lst : [] };
@@ -185,21 +237,35 @@ setInterval(function() {
   j.lst.sort(function(a, b) {
     return a.score - b.score;
   });
+	
   broadcast(j);
+	
+	if (j.lst.length > 0 && j.lst[j.lst.length - 1].score !== undefined && j.lst[j.lst.length - 1].score >= S.scoreMax && won === false)
+	{
+		var j2 = { type:"won",
+							 name: j.lst[0].name};
+		won = true;
+		broadcast(j2);
+		setTimeout(function() {
+			newGame();
+		}, S.gameOverTimer);
+	}
 }, 1000);
 
 setInterval(function() {
-  var j = { type : "all",
+	if (won === false) {
+		var j = { type : "all",
             lst : [] };
-  for(var c in clients) {
-    if (clients[c].last !== undefined && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
-			moveClient(clients[c]);
-			checkCatCollision(clients[c]);
-			updateHideJauge(clients[c]);
-      j.lst.push(clients[c].last);
-    }
-  }
-  broadcast(j);
+		for(var c in clients) {
+			if (clients[c].last !== undefined && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
+				moveClient(clients[c]);
+				checkCatCollision(clients[c]);
+				updateHideJauge(clients[c]);
+				j.lst.push(clients[c].last);
+			}
+		}
+		broadcast(j);
+	}
 }, 100);
 
 var wss = new ws.Server({server: server});

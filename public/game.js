@@ -54,6 +54,10 @@ function newPlayer(map, X, Y) {
     hJ: 0,
     visible: false
   };
+	
+	function setMap(Map) {
+		map = Map;
+	}
   
   function update() {
     if (player.current_tile !== undefined) {
@@ -61,6 +65,7 @@ function newPlayer(map, X, Y) {
     }
     if (player.x !== undefined && player.y !== undefined) {
       player.current_tile = map[player.y][player.x];
+			console.log("je m'affiche " + player.type + " sur " + player.current_tile.type);
       player.current_tile.elem.html(player.type);
       
       if (player.cat === true) {
@@ -97,6 +102,7 @@ function newPlayer(map, X, Y) {
   
   player.update = update;
   player.sendInfo = sendInfo;
+	player.setMap = setMap;
   update();
   return player;
 }
@@ -177,13 +183,27 @@ $(document).ready(function() {
           netUpdatePlayer(p);
         });
         break;
+			case "won":
+				$('#gameOver h1').html(data.name + " WON!");
+				$('#gameOver').fadeIn(500);
+				break;
+			case "end":
+				$('#gameOver').fadeOut(500, function() {
+					map = genMap(data.map);
+					for (var p in players) {
+						var player = players[p];
+						player.setMap(map);
+					}
+					W = data.w;
+					H = data.h;
+				});
+				break;
       case "r":
         map[data.y][data.x].restore();
         break; 
       case "scores":
         $("#scoreList").empty();
         data.lst.forEach(function(e) {
-          console.log(e.name, e.score);
           var elem = $("<div class='score'>"+e.name+" : "+e.score+"</div>");
           if (e.cat === true) {
             elem.addClass("cat");
