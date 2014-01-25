@@ -13,7 +13,8 @@ var S = { // SETTINGS
   hideJaugeMaxValue:	5.0,
   hideJaugeStep:			0.1,
 	scoreMax:						60,
-	gameOverTimer:			5000 //ms
+	gameOverTimer:			5000, //ms
+	maxStillTime:				1
 };
 
 if (process.argv.length === 3) {
@@ -59,6 +60,7 @@ function setCat(id) {
   cat.last.cat = true;
   cat.timer = 5.0;
 	delete cat.last.hJ;
+	delete cat.stillTimer;
   console.log("set CAT:"+id);
 }
 
@@ -163,16 +165,35 @@ function checkCatCollision(client) {
 }
 function updateHideJauge(client) {
 	if (client !== cat) {
-		
-		if (client.last.t == map[client.last.y][client.last.x] || (client.last.u === 0 && client.last.v === 0))
+		var addToJauge = false;
+		if (client.last.u === 0.0 && client.last.v === 0.0) {
+		  if (client.stillTimer === undefined) {
+				client.stillTimer = 0;
+			}
+			if (client.stillTimer < S.maxStillTime) {
+				client.stillTimer += 0.1;
+			}
+			else {
+				addToJauge = true;
+			}
+		}
+		else {
+			delete client.stillTimer;
+		}
+		addToJauge = addToJauge || client.last.t == map[client.last.y][client.last.x];
+		if (addToJauge) {
 			client.last.hJ += S.hideJaugeStep;
-		else
+		}
+		else {
 			client.last.hJ -= S.hideJaugeStep;
+		}
 			
-		if (client.last.hJ < 0)
+		if (client.last.hJ < 0) {
 			client.last.hJ = 0;
-		else if (client.last.hJ > S.hideJaugeMaxValue)
+		}
+		else if (client.last.hJ > S.hideJaugeMaxValue) {
 			client.last.hJ = S.hideJaugeMaxValue;
+		}
 	}
 }
 
