@@ -35,7 +35,6 @@ function broadcast(j, not) {
 }
 
 var cat = undefined;
-var lastCat = undefined;
 
 function setCat(id) {
   cat = clients[id];
@@ -82,9 +81,11 @@ var players = 0;
 function moveClient(client) {
   var speed = 1;
   if (client.last.cat === true) {
+		if (client.timer >= 1) {
+      client.timer -= 0.1;
+		}
     if (client.timer >= 1) {
       speed = 0;
-      client.timer -= 0.1;
       client.last.t = Math.round(client.timer).toString();
     } else {
       if (client.timer !== undefined) {
@@ -126,25 +127,28 @@ function moveClient(client) {
   }
 }
 
+function checkCatCollision(client) {
+	if (cat !== undefined)
+		console.log("cat timer : " + cat.timer);
+	if (cat !== undefined && cat !== client && (cat.timer === undefined || cat.timer < 1 )) {
+		var X = cat.last.x - client.last.x;
+		var Y = cat.last.y - client.last.y;
+		console.log("cat delta : c : " + client.id + " x : " + X + " y : " + Y);
+		if (Math.abs(X) <= 1 && Math.abs(Y) <= 1) {
+			delete cat.last.cat;
+			console.log("cat changed! ", cat.id, "->", client.id);
+			setCat(client.id);
+		}
+	}
+}
+
 setInterval(function() {
   var j = { type : "all",
             lst : [] };
   for(var c in clients) {
-    if (clients[c].last && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
+    if (clients[c].last !== undefined && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
 			moveClient(clients[c]);
-      if (cat && cat != clients[c] && clients[c] !== lastCat) {
-        var X = cat.last.x - clients[c].last.x;
-        var Y = cat.last.y - clients[c].last.y;
-        if (Math.abs(X) <= 1 && Math.abs(Y) <= 1) {
-          delete cat.last.cat;
-          lastCat = cat;
-          setCat(c);
-          console.log("cat changed! ", lastCat.id, "->", cat.id);
-          setTimeout(function() {
-            lastCat = undefined;
-          }, 2000);
-        }
-      }
+			checkCatCollision(clients[c]);
       j.lst.push(clients[c].last);
     }
   }
