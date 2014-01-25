@@ -242,7 +242,8 @@ setInterval(function() {
 	
 	if (j.lst.length > 0 && j.lst[j.lst.length - 1].score !== undefined && j.lst[j.lst.length - 1].score >= S.scoreMax && won === false)
 	{
-		var j2 = { type:"won"};
+		var j2 = { type:"won",
+							 name: j.lst[0].name};
 		won = true;
 		broadcast(j2);
 		setTimeout(function() {

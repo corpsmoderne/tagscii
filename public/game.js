@@ -176,17 +176,19 @@ $(document).ready(function() {
         });
         break;
 			case "won":
+				$('#gameOver h1').html(data.name + " WON!");
 				$('#gameOver').fadeIn(500);
 				break;
 			case "end":
-				$('#gameOver').fadeOut(500);
-        map = genMap(data.map);
-				for (var p in players) {
-					var player = players[p];
-					player.setMap(map);
-				}
-        W = data.w;
-        H = data.h;
+				$('#gameOver').fadeOut(500, function() {
+					map = genMap(data.map);
+					for (var p in players) {
+						var player = players[p];
+						player.setMap(map);
+					}
+					W = data.w;
+					H = data.h;
+				});
 				break;
       case "r":
         map[data.y][data.x].restore();
