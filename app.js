@@ -20,7 +20,15 @@ var ws = require('ws');
 var app = express();
 
 var levels = [];
+levels.push("LVL_1.js");
 levels.push("LVL_2.js");
+levels.push("LVL_3.js");
+levels.push("LVL_4.js");
+levels.push("LVL_5.js");
+levels.push("LVL_6.js");
+levels.push("LVL_7.js");
+levels.push("LVL_8.js");
+levels.push("LVL_9.js");
 
 function genMap() {
   var map = require("./" + levels[Math.floor(Math.random()*levels.length)]).level;
