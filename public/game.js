@@ -124,6 +124,12 @@ function netUpdatePlayer(data) {
 
 $(document).ready(function() {
 
+  var name = prompt("What's your nickname?");
+  if (name === null || name === "") {
+    name = "Anon";
+  }
+  console.log(">>> ", name);
+
   var url = 'ws://' + window.document.location.host+window.document.location.pathname;
 
   var timeout = 1;
@@ -141,6 +147,7 @@ $(document).ready(function() {
     ws.onopen = function(event) {
       timeout = 1;
       console.log("connected");
+      ws.send(JSON.stringify({ t:"name", n:name}));
     };
     ws.onmessage = function (event) {
       //console.log(event.data);
@@ -163,9 +170,19 @@ $(document).ready(function() {
         });
         break;
       case "r":
-        console.log(data);
         map[data.y][data.x].restore();
-        break;  
+        break; 
+      case "scores":
+        $("#list").empty();
+        data.lst.forEach(function(e) {
+          console.log(e.name, e.score);
+          var elem = $("<div class='score'>"+e.name+" : "+e.score+"</div>");
+          if (e.cat === true) {
+            elem.addClass("cat");
+          }
+          $("#list").append(elem);
+        });
+        break;
       default:
         console.log(data);
         break;
