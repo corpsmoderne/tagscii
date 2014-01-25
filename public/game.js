@@ -22,6 +22,13 @@ function genMap(M) {
       tile.elem = $("<span class='tile'>"+tile.type+"</span>");
       tile.elem.css("top", i*10);
       tile.elem.css("left", j*10);
+
+      tile.restore = function() {
+        tile.elem.html(tile.type);
+        tile.elem.removeClass("player");
+        tile.elem.removeClass("cat");
+      };
+      
       $("#main").append(tile.elem);
       line.push(tile);
       j++;
@@ -41,9 +48,7 @@ function newPlayer(map, X, Y) {
   
   function update() {
     if (player.current_tile !== undefined) {
-      player.current_tile.elem.html(player.current_tile.type);
-      player.current_tile.elem.removeClass("player");
-      player.current_tile.elem.removeClass("cat");
+      player.current_tile.restore();
     }
     if(player.x && player.y) {
       player.current_tile = map[player.y][player.x];
@@ -110,7 +115,6 @@ $(document).ready(function() {
     ws.onopen = function(event) {
       timeout = 1;
       console.log("connected");
-      //ws.send(JSON.stringify({ type:"ping"}));
     };
     ws.onmessage = function (event) {
       //console.log(event.data);
@@ -133,8 +137,9 @@ $(document).ready(function() {
           netUpdatePlayer(p);
         });
         break;
-      case "ping":
-        //player.sendInfo();
+      case "r":
+        console.log(data);
+        map[data.y][data.x].restore();
         break;  
       default:
         console.log(data);

@@ -150,8 +150,15 @@ wss.on('connection', function(client) {
     if (cat && cat.id == id) {
       cat = undefined;
     }
+
+    var x = clients[id].last.x;
+    var y = clients[id].last.y;
+
     delete clients[id];
     players--;
+
+    broadcast({ type:"r", x:x, y:y });
+
     if (cat === undefined) {
       addCat();
     }
