@@ -179,6 +179,9 @@ $(document).ready(function() {
           var elem = $("<div class='score'>"+e.name+" : "+e.score+"</div>");
           if (e.cat === true) {
             elem.addClass("cat");
+            elem.append($("<span style='float:right'>(>’.’<)</span>"));
+          } else {
+            elem.append($("<span style='float:right'>~(  '°></span>"));
           }
           $("#list").append(elem);
         });
