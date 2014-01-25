@@ -128,7 +128,6 @@ function moveClient(client) {
 }
 
 function checkCatCollision(client) {
-	if (cat !== undefined)
 	if (cat !== undefined && cat !== client && (cat.timer === undefined || cat.timer < 1 )) {
 		var X = cat.last.x - client.last.x;
 		var Y = cat.last.y - client.last.y;
