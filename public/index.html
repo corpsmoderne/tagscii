@@ -32,10 +32,10 @@
       background: red;
       }
 			
-			.visible {
-				background: green;
-			}
-
+      .visible {
+      background: green;
+      }
+      
       .tile {
         position: absolute;
       }
@@ -60,12 +60,33 @@
         padding: 5px;
       }
 
+      #doc {
+      font-size: small;
+      border-top: thin solid black;
+      margin-top: 1em;
+      }
+      #doc ul {
+        padding-left: 2em;
+      }
+
     </style>
   </head>
   <body>
     <h1>TAGSCII</h1>
 
     <div id="list">
+      <h4>SCORES:</h4>
+      <div id="scoreList">
+      </div>
+      <div id="doc">
+        <ul>
+          <li>Arrows to move</li>
+          <li>Letters and Numbers to hide in the background</li>
+          <li>Avoid the (red) cat when you're a mouse</li>
+          <li>Catch a mouse when you're the (red) cat</li>
+          <li>You turn green and visible when hiding for too long!</li>
+        </ul>
+      </div>
     </div>
 
     <div id="main">

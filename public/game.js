@@ -173,7 +173,7 @@ $(document).ready(function() {
         map[data.y][data.x].restore();
         break; 
       case "scores":
-        $("#list").empty();
+        $("#scoreList").empty();
         data.lst.forEach(function(e) {
           console.log(e.name, e.score);
           var elem = $("<div class='score'>"+e.name+" : "+e.score+"</div>");
@@ -183,7 +183,7 @@ $(document).ready(function() {
           } else {
             elem.append($("<span style='float:right'>~(  '°></span>"));
           }
-          $("#list").append(elem);
+          $("#scoreList").append(elem);
         });
         break;
       default:
