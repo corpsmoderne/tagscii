@@ -79,6 +79,7 @@ function addCat() {
   var id = lst[Math.floor(Math.random()*lst.length)];
 
   if (clients[id] && clients[id].last) {
+    addToLog(clients[id].name + " is \"it\"!");
     setCat(id);
   }
 }
