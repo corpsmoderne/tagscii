@@ -9,6 +9,10 @@ var cat = undefined;
 var players = {};
 var ws;
 
+//these are defined in app.js
+var hideJaugeThreshold;
+var	hideJaugeMaxValue;
+
 window.players = players;
 
 function genMap(M) {
@@ -28,6 +32,7 @@ function genMap(M) {
         tile.elem.html(tile.type);
         tile.elem.removeClass("player");
         tile.elem.removeClass("cat");
+        tile.elem.removeClass("visible");
       };
       
       $("#main").append(tile.elem);
@@ -47,20 +52,34 @@ function newPlayer(map, X, Y) {
     u: 0,
     v: 0,
     type: 'P',
+		hJ: 0,
+		visible: false
   };
   
   function update() {
     if (player.current_tile !== undefined) {
       player.current_tile.restore();
     }
-    if(player.x !== undefined && player.y !== undefined) {
+    if (player.x !== undefined && player.y !== undefined) {
       player.current_tile = map[player.y][player.x];
       player.current_tile.elem.html(player.type);
-      if (player.you == true) {
-        player.current_tile.elem.addClass("player");
-      }
-      if (player.cat == true) {
+			
+      if (player.cat === true) {
         player.current_tile.elem.addClass("cat");
+				player.hJ = 0;
+				player.visible = false;
+      }
+			
+			if (player.hJ >= hideJaugeMaxValue && !player.visible == true)
+				player.visible = true;
+			else if (player.hJ < hideJaugeThreshold && player.visible == true)
+				player.visible = false;
+				
+			if (player.visible == true) {
+				player.current_tile.elem.addClass("visible");
+			}
+			if (player.you == true) {
+        player.current_tile.elem.addClass("player");
       }
     }
   }
@@ -90,6 +109,10 @@ function netUpdatePlayer(data) {
     players[data.id].x = data.x;
     players[data.id].y = data.y;
     players[data.id].type = data.t;
+		if (data.hJ === undefined)
+			players[data.id].hJ = 0;
+		else
+			players[data.id].hJ = data.hJ;
   }
   if (data.cat === true) {
     players[data.id].cat = true;
@@ -127,6 +150,8 @@ $(document).ready(function() {
         map = genMap(data.map);
         W = data.w;
         H = data.h;
+				hideJaugeThreshold = data.hJT;
+				hideJaugeMaxValue = data.hJM;
 
         you = data.you;
 

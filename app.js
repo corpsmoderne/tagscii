@@ -7,6 +7,11 @@ var S = { // SETTINGS
   PORT: 3000,
   W: 64,
   H: 64,
+	
+	//GAMEPLAY DEFINES
+	hideJaugeThreshold: 4.5,
+	hideJaugeMaxValue:	5.0,
+	hideJaugeStep:			0.1
 };
 
 var express = require('express');
@@ -40,12 +45,14 @@ function setCat(id) {
   cat = clients[id];
   cat.last.cat = true;
   cat.timer = 5.0;
+	delete cat.last.hJ;
   console.log("set CAT:"+id);
 }
 
 function addCat() {
   if (cat && cat.last) {
     delete cat.last.cat;
+		cat.last.hJ = 0;
   }
   var lst = [];
   for(var e in clients) {
@@ -133,9 +140,24 @@ function checkCatCollision(client) {
 		var Y = cat.last.y - client.last.y;
 		if (Math.abs(X) <= 1 && Math.abs(Y) <= 1) {
 			delete cat.last.cat;
+			cat.last.hJ = 0;
 			console.log("cat changed! ", cat.id, "->", client.id);
 			setCat(client.id);
 		}
+	}
+}
+function updateHideJauge(client) {
+	if (client !== cat) {
+		
+		if (client.last.t == map[client.last.y][client.last.x])
+			client.last.hJ += S.hideJaugeStep;
+		else
+			client.last.hJ -= S.hideJaugeStep;
+			
+		if (client.last.hJ < 0)
+			client.last.hJ = 0;
+		else if (client.last.hJ > S.hideJaugeMaxValue)
+			client.last.hJ = S.hideJaugeMaxValue;
 	}
 }
 
@@ -146,6 +168,7 @@ setInterval(function() {
     if (clients[c].last !== undefined && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
 			moveClient(clients[c]);
 			checkCatCollision(clients[c]);
+			updateHideJauge(clients[c]);
       j.lst.push(clients[c].last);
     }
   }
@@ -169,7 +192,10 @@ wss.on('connection', function(client) {
     map: map,
     w: S.W,
     h: S.H,
-    you: id
+    you: id,
+		hJT: S.hideJaugeThreshold,
+		hJM: S.hideJaugeMaxValue
+		
   };
 
   client.last = {
@@ -177,8 +203,9 @@ wss.on('connection', function(client) {
     t: 'P',
     x: Math.floor(Math.random()*S.W),
     y: Math.floor(Math.random()*S.H),
-	u: 0,
-	v: 0
+		u: 0,
+		v: 0,
+		hJ: 0
   };
   console.log(client.last);
 
