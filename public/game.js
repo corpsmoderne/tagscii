@@ -100,6 +100,14 @@ $(document).ready(function() {
           players[data.id].update();
         }
         break;
+      case "cat":
+        if (cat !== undefined) {
+          cat.elem.removeClass("cat");
+          cat.cat = false;
+        }
+        players[data.id].cat = true;
+        players[data.id].elem.addClass("cat");
+        break;
       case "ping":
         ws.send(JSON.stringify({
           x: player.x,

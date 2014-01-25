@@ -21,9 +21,18 @@ function genMap() {
   var map = require("./" + levels[Math.floor((Math.random()*Math.random())*levels.length)]).level;
   return map;
 }
+var map = genMap();
+
+
+function broadcast(j, not) {
+  for(var c in clients) {
+    if (clients[c].id !== not) {
+      clients[c].send(JSON.stringify(j));
+    }
+  }
+}
 
 var cat = undefined;
-
 function addCat() {
 
   var lst = [];
@@ -34,9 +43,8 @@ function addCat() {
 
   cat = clients[id];
   console.log("ADD CAT:"+id);
+  broadcast({ type:"cat", id:id }, null);
 }
-
-var map = genMap();
 
 app.configure(function() {
     //app.use(cookieParser);
@@ -84,13 +92,8 @@ wss.on('connection', function(client) {
     if (cat && cat.id == id) {
       j.cat = true;
     }
-    for(var c in clients) {
-      if (clients[c].id !== j.id) {
-        clients[c].send(JSON.stringify(j));
-      }
-    }
+    broadcast(j, j.id);
 
-//    console.log(id+" < "+data);
   });
   
   client.on('close', function() {
