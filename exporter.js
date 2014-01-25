@@ -10,7 +10,7 @@ files.forEach(function(filename) {
 
 function generateLevelJS(filename) {
 	var input = fs.readFileSync(filename, 'utf8');
-	var output = "exports.LVL_" + filename.substring(0, filename.length -4) +  " = [\n\t[\"";
+	var output = "exports.level = [\n\t[\"";
 	for (var i = 0; i < input.length - 1; ++i) {
 		var currentChar = input.charAt(i);
 		switch (currentChar)

@@ -14,18 +14,11 @@ var http = require('http');
 var ws = require('ws');
 var app = express();
 
-var tiles = "....----===+*%$#";
-function genMap() {
-  var map = [];
+var levels = [];
+levels.push("LVL_1.js");
 
-  for(var i=0; i < S.H; i++) {
-    var line = [];
-    for(var j=0; j < S.W; j++) {
-      var tile = tiles[Math.floor((Math.random()*Math.random())*tiles.length)];      
-      line.push(tile);
-    }
-    map.push(line);
-  }
+function genMap() {
+  var map = require("./" + levels[Math.floor((Math.random()*Math.random())*levels.length)]).level;
   return map;
 }
 
