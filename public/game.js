@@ -12,6 +12,8 @@ var ws;
 var hideJaugeThreshold;
 var	hideJaugeMaxValue;
 
+var maxLogEntries = 100;
+
 window.players = players;
 
 function genMap(M) {
@@ -69,17 +71,17 @@ function newPlayer(map, X, Y) {
       
       if (player.cat === true) {
         player.current_tile.elem.addClass("cat");
-	player.hJ = 0;
-	player.visible = false;
+				player.hJ = 0;
+				player.visible = false;
       }
       
       if (player.hJ >= hideJaugeMaxValue && !player.visible == true) {
-	player.visible = true; 
+				player.visible = true; 
         if (player.you === true) {
           $("#turned")[0].play();
         }
       } else if (player.hJ < hideJaugeThreshold && player.visible == true) {
-	player.visible = false;
+				player.visible = false;
       }
       
       if (player.visible == true) {
@@ -169,10 +171,8 @@ $(document).ready(function() {
         map = genMap(data.map);
         W = data.w;
         H = data.h;
-
-	hideJaugeThreshold = data.hJT;
-	hideJaugeMaxValue = data.hJM;
-        
+				hideJaugeThreshold = data.hJT;
+				hideJaugeMaxValue = data.hJM;
         you = data.you;
         
         console.log("map loaded");
@@ -202,6 +202,13 @@ $(document).ready(function() {
 	break;
       case "r":
         map[data.y][data.x].restore();
+        break; 
+      case "log":
+	var logLine = $("<span class='logEntry'>" + data.content + "<br/></span>");
+	$("#log").prepend(logLine);
+	if ($("#log").children().length > maxLogEntries) {
+	  $("#log").children().last().remove();
+	}
         break; 
       case "scores":
         console.log(data.warmup);

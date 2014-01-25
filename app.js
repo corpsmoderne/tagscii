@@ -13,7 +13,9 @@ var S = { // SETTINGS
   hideJaugeMaxValue: 5.0,
   hideJaugeStep: 0.1,
   scoreMax: 60,
-  gameOverTimer: 5000 //ms
+  gameOverTimer: 5000, //ms
+  maxStillTime: 0.5
+  
 };
 
 if (process.argv.length === 3) {
@@ -25,14 +27,12 @@ var http = require('http');
 var ws = require('ws');
 var app = express();
 
-var levels = [
-  "LVL_1.js",
-  "LVL_2.js",
-  "LVL_3.js",
-  "LVL_4.js",
-  "LVL_5.js",
-  "LVL_6.js"
-];
+var levels = [];
+levels.push("LVL_Level_11_A.js");
+levels.push("LVL_Level_12_B.js");
+levels.push("LVL_Level_13_C.js");
+levels.push("LVL_Level_14_D.js");
+levels.push("LVL_Level_15_E.js");
 
 var won = false;
 var warmup = 10;
@@ -60,6 +60,7 @@ function setCat(id) {
   cat.last.cat = true;
   cat.timer = 5.0;
   delete cat.last.hJ;
+  delete cat.stillTimer;
   console.log("set CAT:"+id);
 }
 
@@ -79,6 +80,14 @@ function addCat() {
   if (clients[id] && clients[id].last) {
     setCat(id);
   }
+}
+
+function addToLog(line) {
+	
+  var message = { type: "log",
+		  content: line};
+  console.log(message);
+  broadcast(message);
 }
 
 app.configure(function() {
@@ -160,22 +169,52 @@ function checkCatCollision(client) {
       delete cat.last.cat;
       cat.last.hJ = 0;
       console.log("cat changed! ", cat.id, "->", client.id);
+      addToLog(cat.name + " tagged " + client.name + "!");
       setCat(client.id);
     }
   }
 }
+
 function updateHideJauge(client) {
   if (client !== cat) {
-    
-    if (client.last.t == map[client.last.y][client.last.x] || (client.last.u === 0 && client.last.v === 0))
+    if (client.visible === undefined)
+      client.visible = false;
+    var addToJauge = false;
+    if (client.last.u === 0.0 && client.last.v === 0.0) {
+      if (client.stillTimer === undefined) {
+	client.stillTimer = 0;
+      }
+      if (client.stillTimer < S.maxStillTime) {
+	client.stillTimer += 0.1;
+      }
+      else {
+	addToJauge = true;
+      }
+    }
+    else {
+      delete client.stillTimer;
+    }
+    addToJauge = addToJauge || client.last.t == map[client.last.y][client.last.x];
+    if (addToJauge) {
       client.last.hJ += S.hideJaugeStep;
-    else
+    }
+    else {
       client.last.hJ -= S.hideJaugeStep;
+    }
     
-    if (client.last.hJ < 0)
+    if (client.last.hJ < 0) {
       client.last.hJ = 0;
-    else if (client.last.hJ > S.hideJaugeMaxValue)
+    }
+    else if (client.last.hJ >= S.hideJaugeMaxValue) {
+      if (client.visible === false) {
+	client.visible = true;
+	addToLog(client.name + " has become visible!");
+      }
       client.last.hJ = S.hideJaugeMaxValue;
+    }
+    else if (client.last.hJ < S.hideJaugeThreshold && client.visible === true) {
+      client.visible = false;
+    }
   }
 }
 
