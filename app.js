@@ -403,8 +403,10 @@ wss.on('connection', function(client) {
       addCat();
     }
     
-    if (warmup <= 0 && players <= 1) {
-      setTimeout(newGame, 2000);
+    if (players <= 1) {
+      setTimeout(function() {
+        newGame();
+      }, 2000);
     }
 
   });

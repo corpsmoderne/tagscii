@@ -215,7 +215,8 @@ $(document).ready(function() {
         if (data.warmup && data.warmup < 10) {
           $("#warmup h3").html("WARMUP: start in "+data.warmup);
           $("#warmup").show();
-          if (player.last === undefined) {
+          if (player === undefined) {
+            console.log("showing join button");
             $("#join").show();
           }
         } else {
@@ -253,22 +254,22 @@ $(document).ready(function() {
 
     switch(event.keyCode) {
     case 37: // LEFT
-			if (player.u >= 0)
-				player.u -= 1;
+      if (player.u >= 0)
+	player.u -= 1;
       break;
     case 38: // UP
-			if (player.v >= 0)
-				player.v -= 1;
+      if (player.v >= 0)
+	player.v -= 1;
       break;
     case 39: // RIGHT
-			if (player.u <= 0)
-				player.u += 1;
+      if (player.u <= 0)
+	player.u += 1;
       break;
     case 40: // DOWN
-			if (player.v <= 0)
-				player.v += 1;
+      if (player.v <= 0)
+	player.v += 1;
       break;
-    // SPACE keycode : 32
+      // SPACE keycode : 32
     default:
       var c = String.fromCharCode(event.keyCode).toLowerCase();
       if("abcdefghijklmnopqrstuvwxyz0123456789".indexOf(c) !== -1) {
@@ -280,31 +281,31 @@ $(document).ready(function() {
     player.sendInfo();
   });
   
-
+  
   $(document).keyup(function(event) {
     //console.log(event);
     if (player === undefined) {
       return;
     }
-
+    
     switch(event.keyCode) {
     case 37: // LEFT
-			if (player.u <= 0)
-				player.u += 1;
+      if (player.u <= 0)
+	player.u += 1;
       break;
     case 38: // UP
-			if (player.v <= 0)
-				player.v += 1;
+      if (player.v <= 0)
+	player.v += 1;
       break;
     case 39: // RIGHT
-			if (player.u >= 0)
-				player.u -= 1;
+      if (player.u >= 0)
+	player.u -= 1;
       break;
     case 40: // DOWN
-			if (player.v >= 0)
-				player.v -= 1;
+      if (player.v >= 0)
+	player.v -= 1;
       break;
-    // SPACE keycode : 32
+      // SPACE keycode : 32
     default:
       break;
     }
