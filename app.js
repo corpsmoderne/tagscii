@@ -9,7 +9,7 @@ var S = { // SETTINGS
   H: 64,
 	
   //GAMEPLAY DEFINES
-  hideJaugeThreshold: 4.5,
+  hideJaugeThreshold: 4.0,
   hideJaugeMaxValue:	5.0,
   hideJaugeStep:			0.1
 };
@@ -165,7 +165,7 @@ function checkCatCollision(client) {
 function updateHideJauge(client) {
 	if (client !== cat) {
 		
-		if (client.last.t == map[client.last.y][client.last.x])
+		if (client.last.t == map[client.last.y][client.last.x] || (client.last.u === 0 && client.last.v === 0))
 			client.last.hJ += S.hideJaugeStep;
 		else
 			client.last.hJ -= S.hideJaugeStep;
