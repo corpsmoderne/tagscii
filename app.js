@@ -19,6 +19,8 @@ levels.push("LVL_1.js");
 
 function genMap() {
   var map = require("./" + levels[Math.floor(Math.random()*levels.length)]).level;
+  S.W = map[0].length;
+  S.H = map.length;
   return map;
 }
 
