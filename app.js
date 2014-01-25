@@ -63,6 +63,10 @@ var clients = {
 };
 var players = 0;
 
+setInterval(function() {
+  addCat();
+}, 10000);
+
 var wss = new ws.Server({server: server});
 wss.on('connection', function(client) {
   var id = uids;
@@ -83,15 +87,21 @@ wss.on('connection', function(client) {
     h: S.H,
   };
 
+  for(var c in clients) {
+    if (clients[c].last !== undefined) {
+      client.send(JSON.stringify(clients[c].last));
+    }
+  }
+
   client.send(JSON.stringify(j));
 
   client.on('message', function(data) {
     var j = JSON.parse(data);
     j.id = id;
     j.type = "p";
-    if (cat && cat.id == id) {
-      j.cat = true;
-    }
+
+    client.last = j;
+
     broadcast(j, j.id);
 
   });

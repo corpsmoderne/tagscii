@@ -40,6 +40,7 @@ function newPlayer(map, X, Y) {
     if (player.current_tile !== undefined) {
       player.current_tile.elem.html(player.current_tile.type);
       player.current_tile.elem.removeClass("player");
+      player.current_tile.elem.removeClass("cat");
     }
     player.current_tile = map[player.y][player.x];
     player.current_tile.elem.html(player.type);
@@ -47,7 +48,17 @@ function newPlayer(map, X, Y) {
       player.current_tile.elem.addClass("player");
     }
   }
+
+  function sendInfo() {
+    ws.send(JSON.stringify({
+      x: player.x,
+      y: player.y,
+      t: player.type,
+    }));
+  }
+  
   player.update = update;
+  player.sendInfo = sendInfo;
   update();
   return player;
 }
@@ -74,7 +85,7 @@ $(document).ready(function() {
       ws.send(JSON.stringify({ type:"ping"}));
     };
     ws.onmessage = function (event) {
-      console.log(event.data);
+      //console.log(event.data);
       var data = JSON.parse(event.data);
       switch(data.type) {
       case "map":
@@ -86,7 +97,7 @@ $(document).ready(function() {
                            Math.floor(Math.random()*W), 
                            Math.floor(Math.random()*H));
         player.you = true;
-
+        player.sendInfo();
         break;
       case "p":
         if (data.id != player.id) {
@@ -101,19 +112,21 @@ $(document).ready(function() {
         }
         break;
       case "cat":
+        console.log(data);
+        console.log(players);
         if (cat !== undefined) {
-          cat.elem.removeClass("cat");
+          console.log("old cat", cat);
+          cat.current_tile.elem.removeClass("cat");
           cat.cat = false;
         }
-        players[data.id].cat = true;
-        players[data.id].elem.addClass("cat");
+        cat = players[data.id];
+        console.log(cat, data);
+        cat.cat = true;
+        cat.current_tile.elem.addClass("cat");
+
         break;
       case "ping":
-        ws.send(JSON.stringify({
-          x: player.x,
-          y: player.y,
-          t: player.type,
-        }));
+        player.sendInfo();
         break;  
       default:
         console.log(data);
@@ -151,12 +164,7 @@ $(document).ready(function() {
       break;
     }
     player.update();
-    ws.send(JSON.stringify({
-      x: player.x,
-      y: player.y,
-      t: player.type,
-    }));
-    
+    player.sendInfo();
   });
   
 });
