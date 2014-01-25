@@ -196,9 +196,6 @@ $(document).ready(function() {
 	  W = data.w;
 	  H = data.h;
 	});
-
-        $("#warmup h3").html("WARMUP: awaiting players");
-        $("#warmup").show();
 	break;
       case "r":
         map[data.y][data.x].restore();
@@ -211,21 +208,6 @@ $(document).ready(function() {
 	}
         break; 
       case "scores":
-        console.log(data.warmup);
-        if (data.warmup && data.warmup < 10) {
-          $("#warmup h3").html("WARMUP: start in "+data.warmup);
-          $("#warmup").show();
-          if (player === undefined) {
-            console.log("showing join button");
-            $("#join").show();
-          }
-        } else {
-          if (data.warmup === undefined) {
-            $("#warmup").hide();
-            $("#join").hide();
-          }
-        }
-
         $("#scoreList").empty();
         data.lst.forEach(function(e) {
           var elem = $("<div class='score'>"+e.name+" : "+e.score+"</div>");

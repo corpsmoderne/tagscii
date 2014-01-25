@@ -35,7 +35,8 @@ levels.push("LVL_Level_14_D.js");
 levels.push("LVL_Level_15_E.js");
 
 var won = false;
-var warmup = 10;
+
+var worstScore = 0;
 
 function genMap() {
   var map = require("./" + levels[Math.floor(Math.random()*levels.length)]).level;
@@ -221,7 +222,7 @@ function updateHideJauge(client) {
 function newGame() {
   map = genMap();
   won = false;
-  warmup = 10;
+  cat = undefined;
 
   for(var c in clients) {
     var client = clients[c];
@@ -264,21 +265,16 @@ function newGame() {
 }
 
 setInterval(function() {
-  if (warmup > 0) {
-    if (players > 1) {
-      warmup -= 1;
-    }
-  } else {
-    if (cat === undefined) {
-      addCat();
-    }
+  if (cat === undefined && players > 1) {
+    addCat();
+  }
+
+  for(var c in clients) {
+    worstScore = Math.max(clients[c].score, worstScore);
   }
 
   var j = { type: "scores",
             lst : [] };
-  if (warmup > 0 ) {
-    j.warmup = warmup;
-  }
   for (var c in clients) {
     if(clients[c].last) {
       var cat_ = false;
@@ -329,6 +325,7 @@ wss.on('connection', function(client) {
   console.log("client "+id+" connected");
   
   client.id = id;
+
   client.score = 0;
   
   var j = {
@@ -352,6 +349,8 @@ wss.on('connection', function(client) {
     } else if (j.t === "join") {
 
       players++;
+
+      client.score = worstScore;
       
       client.last = {
         id: id,
@@ -399,7 +398,7 @@ wss.on('connection', function(client) {
       broadcast({ type:"r", x:x, y:y });
     }
     
-    if (warmup <= 0 && cat === undefined && players > 1) {
+    if (cat === undefined && players > 1) {
       addCat();
     }
     
