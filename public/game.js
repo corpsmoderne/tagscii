@@ -3,10 +3,13 @@
 var map;
 var W;
 var H;
+var you = undefined;
 var player = undefined;
 var cat = undefined;
 var players = {};
 var ws;
+
+window.players = players;
 
 function genMap(M) {
   var map = [];
@@ -42,10 +45,15 @@ function newPlayer(map, X, Y) {
       player.current_tile.elem.removeClass("player");
       player.current_tile.elem.removeClass("cat");
     }
-    player.current_tile = map[player.y][player.x];
-    player.current_tile.elem.html(player.type);
-    if (player.you == true) {
-      player.current_tile.elem.addClass("player");
+    if(player.x && player.y) {
+      player.current_tile = map[player.y][player.x];
+      player.current_tile.elem.html(player.type);
+      if (player.you == true) {
+        player.current_tile.elem.addClass("player");
+      }
+      if (player.cat == true) {
+        player.current_tile.elem.addClass("cat");
+      }
     }
   }
 
@@ -61,6 +69,26 @@ function newPlayer(map, X, Y) {
   player.sendInfo = sendInfo;
   update();
   return player;
+}
+
+function netUpdatePlayer(data) {
+  if (players[data.id] === undefined) {
+    players[data.id] = newPlayer(map, data.x, data.y);
+    if (data.id == you) {
+      player = players[data.id];
+      player.you = true;
+    }
+  } else {
+    players[data.id].x = data.x;
+    players[data.id].y = data.y;
+    players[data.id].type = data.t;
+  }
+  if (data.cat === true) {
+    players[data.id].cat = true;
+  } else {
+    delete players[data.id].cat;
+  }
+  players[data.id].update();
 }
 
 $(document).ready(function() {
@@ -82,7 +110,7 @@ $(document).ready(function() {
     ws.onopen = function(event) {
       timeout = 1;
       console.log("connected");
-      ws.send(JSON.stringify({ type:"ping"}));
+      //ws.send(JSON.stringify({ type:"ping"}));
     };
     ws.onmessage = function (event) {
       //console.log(event.data);
@@ -93,40 +121,20 @@ $(document).ready(function() {
         W = data.w;
         H = data.h;
 
-        player = newPlayer(map, 
-                           Math.floor(Math.random()*W), 
-                           Math.floor(Math.random()*H));
-        player.you = true;
-        player.sendInfo();
+        you = data.you;
+
+        console.log("map loaded");
         break;
       case "p":
-        if (data.id != player.id) {
-          if (players[data.id] === undefined) {
-            players[data.id] = newPlayer(map, data.x, data.y);
-          } else {
-            players[data.id].x = data.x;
-            players[data.id].y = data.y;
-            players[data.id].type = data.t;
-          }
-          players[data.id].update();
-        }
+        netUpdatePlayer(data);
         break;
-      case "cat":
-        console.log(data);
-        console.log(players);
-        if (cat !== undefined) {
-          console.log("old cat", cat);
-          cat.current_tile.elem.removeClass("cat");
-          cat.cat = false;
-        }
-        cat = players[data.id];
-        console.log(cat, data);
-        cat.cat = true;
-        cat.current_tile.elem.addClass("cat");
-
+      case "all":
+        data.lst.forEach(function(p) {
+          netUpdatePlayer(p);
+        });
         break;
       case "ping":
-        player.sendInfo();
+        //player.sendInfo();
         break;  
       default:
         console.log(data);
@@ -164,10 +172,10 @@ $(document).ready(function() {
       console.log(player.current_tile.type);
       break;
     default:
-      player.type = String.fromCharCode(event.keyCode);
+      player.type = String.fromCharCode(event.keyCode).toLowerCase();
       break;
     }
-    player.update();
+    //player.update();
     player.sendInfo();
   });
   

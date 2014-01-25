@@ -15,7 +15,7 @@ var ws = require('ws');
 var app = express();
 
 var levels = [];
-levels.push("LVL_1.js");
+levels.push("LVL_2.js");
 
 function genMap() {
   var map = require("./" + levels[Math.floor(Math.random()*levels.length)]).level;
@@ -35,17 +35,23 @@ function broadcast(j, not) {
 }
 
 var cat = undefined;
-function addCat() {
+var lastCat = undefined;
 
+function addCat() {
+  if (cat && cat.last) {
+    delete cat.last.cat;
+  }
   var lst = [];
   for(var e in clients) {
     lst.push(e);
   }
   var id = lst[Math.floor(Math.random()*lst.length)];
 
-  cat = clients[id];
-  console.log("ADD CAT:"+id);
-  broadcast({ type:"cat", id:id }, null);
+  if (clients[id] && clients[id].last) {
+    cat = clients[id];
+    cat.last.cat = true;
+    console.log("ADD CAT:"+id);
+  }
 }
 
 app.configure(function() {
@@ -61,13 +67,37 @@ var server = http.createServer(app);
 server.listen(S.PORT);
 
 var uids = 0;
-var clients = {
-};
+var clients = {};
 var players = 0;
 
 setInterval(function() {
-  addCat();
-}, 10000);
+  
+  
+
+
+  var j = { type : "all",
+            lst : [] };
+  for(var c in clients) {
+    if (clients[c].last && clients[c].last.x && clients[c].last.y) {
+      if (cat && cat != clients[c] && clients[c] !== lastCat) {
+        var X = cat.last.x - clients[c].last.x;
+        var Y = cat.last.y - clients[c].last.y;
+        if (Math.abs(X) <= 1 && Math.abs(Y) <= 1) {
+          delete cat.last.cat;
+          lastCat = cat;
+          cat = clients[c];
+          cat.last.cat = true;
+          console.log("cat changed! ", lastCat.id, "->", cat.id);
+          setTimeout(function() {
+            lastCat = undefined;
+          }, 2000);
+        }
+      }
+      j.lst.push(clients[c].last);
+    }
+  }
+  broadcast(j);
+}, 100);
 
 var wss = new ws.Server({server: server});
 wss.on('connection', function(client) {
@@ -75,7 +105,6 @@ wss.on('connection', function(client) {
   uids++;
   console.log("client "+id+" connected");
   client.id = id;
-  clients[id] = client;
 
   players++;
   if (cat === undefined) {
@@ -87,25 +116,33 @@ wss.on('connection', function(client) {
     map: map,
     w: S.W,
     h: S.H,
+    you: id
   };
 
-  for(var c in clients) {
-    if (clients[c].last !== undefined) {
-      client.send(JSON.stringify(clients[c].last));
-    }
-  }
+  client.last = {
+    id: id,
+    t: 'P',
+    x: Math.floor(Math.random()*S.W),
+    y: Math.floor(Math.random()*S.H)
+  };
+  console.log(client.last);
 
+  clients[id] = client;
   client.send(JSON.stringify(j));
+
 
   client.on('message', function(data) {
     var j = JSON.parse(data);
     j.id = id;
     j.type = "p";
 
-    client.last = j;
+    //client.last = j;
 
-    broadcast(j, j.id);
+    //broadcast(j, j.id);
 
+    client.last.x = j.x;
+    client.last.y = j.y;
+    client.last.t = j.t;
   });
   
   client.on('close', function() {
