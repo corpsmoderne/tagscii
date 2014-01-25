@@ -93,6 +93,8 @@ function moveClient(client) {
         delete client.timer;
         client.stimer = 0.0;
       }
+
+      client.score += 0.1;
     
       if (client.last.u === 0 && client.last.v === 0) {
         client.stimer = 0.0;
@@ -128,24 +130,40 @@ function moveClient(client) {
 }
 
 function checkCatCollision(client) {
-	if (cat !== undefined && cat !== client && (cat.timer === undefined || cat.timer < 1 )) {
-		var X = cat.last.x - client.last.x;
-		var Y = cat.last.y - client.last.y;
-		if (Math.abs(X) <= 1 && Math.abs(Y) <= 1) {
-			delete cat.last.cat;
-			console.log("cat changed! ", cat.id, "->", client.id);
-			setCat(client.id);
-		}
-	}
+  if (cat !== undefined && cat !== client && (cat.timer === undefined || cat.timer < 1 )) {
+    var X = cat.last.x - client.last.x;
+    var Y = cat.last.y - client.last.y;
+    if (Math.abs(X) <= 1 && Math.abs(Y) <= 1) {
+      delete cat.last.cat;
+      console.log("cat changed! ", cat.id, "->", client.id);
+      setCat(client.id);
+    }
+  }
 }
+
+setInterval(function() {
+  var j = { type: "scores",
+            lst : [] };
+  for (var c in clients) {
+    var cat = false;
+    if (clients[c].last.cat === true) {
+      cat = true;
+    }
+    j.lst.push({ name: clients[c].name, score: Math.round(clients[c].score), cat:cat });
+  }
+  j.lst.sort(function(a, b) {
+    return a.score - b.score;
+  });
+  broadcast(j);
+}, 1000);
 
 setInterval(function() {
   var j = { type : "all",
             lst : [] };
   for(var c in clients) {
     if (clients[c].last !== undefined && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
-			moveClient(clients[c]);
-			checkCatCollision(clients[c]);
+      moveClient(clients[c]);
+      checkCatCollision(clients[c]);
       j.lst.push(clients[c].last);
     }
   }
@@ -157,7 +175,9 @@ wss.on('connection', function(client) {
   var id = uids;
   uids++;
   console.log("client "+id+" connected");
+
   client.id = id;
+  client.score = 0;
 
   players++;
   if (cat === undefined) {
@@ -187,14 +207,19 @@ wss.on('connection', function(client) {
 
   client.on('message', function(data) {
     var j = JSON.parse(data);
-    client.last.u = j.u;
-    client.last.v = j.v;
-
-    if (client.last.cat === true && client.last.t !== j.t) {
-      client.stimer = 0.0;
+    
+    if (j.t === "name") {
+      client.name = j.n;
+    } else {
+      client.last.u = j.u;
+      client.last.v = j.v;
+      
+      if (client.last.cat === true && client.last.t !== j.t) {
+        client.stimer = 0.0;
+      }
+      
+      client.last.t = j.t;
     }
-
-    client.last.t = j.t;
   });
   
   client.on('close', function() {
