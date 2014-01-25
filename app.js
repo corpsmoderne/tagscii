@@ -90,11 +90,23 @@ function moveClient(client) {
       if (client.timer !== undefined) {
         client.last.t = 'C';
         delete client.timer;
+        client.stimer = 0.0;
       }
-      speed = 2;
+    
+      if (client.last.u === 0 && client.last.v === 0) {
+        client.stimer = 0.0;
+      } else {
+        client.stimer += 0.1;
+      }
+      
+      if (client.stimer > 0.5) {
+        speed = 2;
+      } else {
+        speed = 1;
+      }
     }
   }
-
+  
   client.last.x += client.last.u*speed;
   client.last.y += client.last.v*speed;
 
@@ -176,6 +188,11 @@ wss.on('connection', function(client) {
     var j = JSON.parse(data);
     client.last.u = j.u;
     client.last.v = j.v;
+
+    if (client.last.cat === true && client.last.t !== j.t) {
+      client.stimer = 0.0;
+    }
+
     client.last.t = j.t;
   });
   
