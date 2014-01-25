@@ -11,6 +11,10 @@
       overflow: hidden;
       }
 
+      h1 {
+      margin-left: 0.5em;
+      }
+
       #main {
       position: absolute;
       top: 40px;
@@ -110,15 +114,28 @@
       font-size: 50px;
       }
 
+      #join {
+      position: absolute;
+      top: 0px;
+      left: 517px;
+      border: thick solid black;
+      background: green;
+      font-size: 22px;
+      font-weight:bold;
+      padding: 0px;
+      width: 150px;
+      }
+
     </style>
   </head>
   <body>
-    <h1>TAGSCII</h1> 
+
+    <h1>TAG-ASCII<button id="join">JOIN!</button></h1> 
 
     <div id="gameOver"><h1>GAME OVER!</h1></div>
 
     <div id="list">
-      <span style="float:right"><button id="join">JOIN!</button></span>
+
       <h3>SCORES:</h3> 
       <div id="scoreList">
       </div>
