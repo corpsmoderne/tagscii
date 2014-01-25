@@ -27,12 +27,16 @@ var http = require('http');
 var ws = require('ws');
 var app = express();
 
-var levels = [];
-levels.push("LVL_Level_11_A.js");
-levels.push("LVL_Level_12_B.js");
-levels.push("LVL_Level_13_C.js");
-levels.push("LVL_Level_14_D.js");
-levels.push("LVL_Level_15_E.js");
+var levels = [
+  "LVL_Level_11_A.js",
+  "LVL_Level_12_B.js",
+  "LVL_Level_13_C.js",
+  "LVL_Level_14_D.js",
+  "LVL_Level_15_E.js",
+  "LVL_Level_15_F.js",
+  "LVL_Level_16_F.js",
+  "LVL_Level_17_G.js"
+];
 
 var won = false;
 
