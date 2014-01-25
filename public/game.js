@@ -129,9 +129,6 @@ $(document).ready(function() {
 
         console.log("map loaded");
         break;
-      case "p":
-        netUpdatePlayer(data);
-        break;
       case "all":
         data.lst.forEach(function(p) {
           netUpdatePlayer(p);
@@ -177,7 +174,10 @@ $(document).ready(function() {
       console.log(player.current_tile.type);
       break;
     default:
-      player.type = String.fromCharCode(event.keyCode).toLowerCase();
+      var c = String.fromCharCode(event.keyCode).toLowerCase();
+      if("abcdefghijklmnopqrstuvwxyz0123456789".indexOf(c) !== -1) {
+        player.type = c;
+      }
       break;
     }
     //player.update();

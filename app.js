@@ -63,6 +63,10 @@ app.configure(function() {
 
 app.use("/pub", express.static(__dirname + '/public'));
 
+app.get("/", function(req, res) {
+  res.sendfile('./public/index.html');
+});
+
 var server = http.createServer(app);
 server.listen(S.PORT);
 
@@ -133,13 +137,6 @@ wss.on('connection', function(client) {
 
   client.on('message', function(data) {
     var j = JSON.parse(data);
-    j.id = id;
-    j.type = "p";
-
-    //client.last = j;
-
-    //broadcast(j, j.id);
-
     client.last.x = j.x;
     client.last.y = j.y;
     client.last.t = j.t;
