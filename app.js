@@ -96,7 +96,7 @@ setInterval(function() {
   var j = { type : "all",
             lst : [] };
   for(var c in clients) {
-    if (clients[c].last && clients[c].last.x && clients[c].last.y) {
+    if (clients[c].last && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
 			moveClient(clients[c]);
       if (cat && cat != clients[c] && clients[c] !== lastCat) {
         var X = cat.last.x - clients[c].last.x;

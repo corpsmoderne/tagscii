@@ -52,7 +52,7 @@ function newPlayer(map, X, Y) {
     if (player.current_tile !== undefined) {
       player.current_tile.restore();
     }
-    if(player.x && player.y) {
+    if(player.x !== undefined && player.y !== undefined) {
       player.current_tile = map[player.y][player.x];
       player.current_tile.elem.html(player.type);
       if (player.you == true) {
