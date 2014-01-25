@@ -129,11 +129,9 @@ function moveClient(client) {
 
 function checkCatCollision(client) {
 	if (cat !== undefined)
-		console.log("cat timer : " + cat.timer);
 	if (cat !== undefined && cat !== client && (cat.timer === undefined || cat.timer < 1 )) {
 		var X = cat.last.x - client.last.x;
 		var Y = cat.last.y - client.last.y;
-		console.log("cat delta : c : " + client.id + " x : " + X + " y : " + Y);
 		if (Math.abs(X) <= 1 && Math.abs(Y) <= 1) {
 			delete cat.last.cat;
 			console.log("cat changed! ", cat.id, "->", client.id);
