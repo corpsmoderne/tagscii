@@ -75,24 +75,30 @@ var clients = {};
 var players = 0;
 
 function moveClient(client) {
-	client.last.x += client.last.u;
-	client.last.y += client.last.v;
-	if (client.last.x < 0)
-		client.last.x = 0;
-	else if (client.last.x >= S.W)
-		client.last.x = S.W - 1;
-		
-	if (client.last.y < 0)
-		client.last.y = 0;
-	else if (client.last.y >= S.H)
-		client.last.y = S.H - 1;
+  var speed =1;
+  if (client.last.cat === true) {
+    speed = 2;
+  }
+
+  client.last.x += client.last.u*speed;
+  client.last.y += client.last.v*speed;
+
+  if (client.last.x < 0) {
+    client.last.x = 0;
+  }
+  else if (client.last.x >= S.W) {
+    client.last.x = S.W - 1;
+  }
+
+  if (client.last.y < 0) {
+    client.last.y = 0;
+  }
+  else if (client.last.y >= S.H) {
+    client.last.y = S.H - 1;
+  }
 }
 
 setInterval(function() {
-  
-  
-
-
   var j = { type : "all",
             lst : [] };
   for(var c in clients) {
