@@ -6,7 +6,7 @@
 var S = { // SETTINGS
   PORT: 3000,
   W: 64,
-  H: 64
+  H: 64,
 };
 
 var express = require('express');
@@ -29,8 +29,21 @@ function genMap() {
   return map;
 }
 
-var map = genMap();
+var cat = undefined;
 
+function addCat() {
+
+  var lst = [];
+  for(var e in clients) {
+    lst.push(e);
+  }
+  var id = lst[Math.floor(Math.random()*lst.length)];
+
+  cat = clients[id];
+  console.log("ADD CAT:"+id);
+}
+
+var map = genMap();
 
 app.configure(function() {
     //app.use(cookieParser);
@@ -47,6 +60,7 @@ server.listen(S.PORT);
 var uids = 0;
 var clients = {
 };
+var players = 0;
 
 var wss = new ws.Server({server: server});
 wss.on('connection', function(client) {
@@ -55,30 +69,47 @@ wss.on('connection', function(client) {
   console.log("client "+id+" connected");
   client.id = id;
   clients[id] = client;
-  
-  client.send(JSON.stringify({ 
+
+  players++;
+  if (cat === undefined) {
+    addCat();
+  }
+
+  var j = {
     type: "map",
     map: map,
     w: S.W,
-    h: S.H
-  }));
+    h: S.H,
+  };
+
+  client.send(JSON.stringify(j));
 
   client.on('message', function(data) {
     var j = JSON.parse(data);
     j.id = id;
     j.type = "p";
+    if (cat && cat.id == id) {
+      j.cat = true;
+    }
     for(var c in clients) {
       if (clients[c].id !== j.id) {
         clients[c].send(JSON.stringify(j));
       }
     }
 
-    console.log(id+" < "+data);
+//    console.log(id+" < "+data);
   });
   
   client.on('close', function() {
     console.log('client '+id+' disconnected');
+    if (cat && cat.id == id) {
+      cat = undefined;
+    }
     delete clients[id];
+    players--;
+    if (cat === undefined) {
+      addCat();
+    }
   });
 });
 

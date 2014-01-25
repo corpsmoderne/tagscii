@@ -4,6 +4,7 @@ var map;
 var W;
 var H;
 var player = undefined;
+var cat = undefined;
 var players = {};
 var ws;
 
@@ -14,7 +15,7 @@ function genMap(M) {
     var line = [];
     var j = 0;
     L.forEach(function(T) {
-      var tile = { type: T };
+      var tile = { type: T, x:j, y:i };
       tile.elem = $("<span class='tile'>"+tile.type+"</span>");
       tile.elem.css("top", i*10);
       tile.elem.css("left", j*10);
@@ -32,7 +33,7 @@ function newPlayer(map, X, Y) {
   var player = {
     x: X, 
     y: Y,
-    type: 'P'
+    type: 'P',
   };
   
   function update() {
@@ -42,7 +43,9 @@ function newPlayer(map, X, Y) {
     }
     player.current_tile = map[player.y][player.x];
     player.current_tile.elem.html(player.type);
-    player.current_tile.elem.addClass("player");
+    if (player.you == true) {
+      player.current_tile.elem.addClass("player");
+    }
   }
   player.update = update;
   update();
@@ -68,7 +71,7 @@ $(document).ready(function() {
     ws.onopen = function(event) {
       timeout = 1;
       console.log("connected");
-      ws.send(JSON.stringify({ hello:"world"}));
+      ws.send(JSON.stringify({ type:"ping"}));
     };
     ws.onmessage = function (event) {
       console.log(event.data);
@@ -79,7 +82,10 @@ $(document).ready(function() {
         W = data.w;
         H = data.h;
 
-        player = newPlayer(map, 0, 0);
+        player = newPlayer(map, 
+                           Math.floor(Math.random()*W), 
+                           Math.floor(Math.random()*H));
+        player.you = true;
 
         break;
       case "p":
@@ -94,6 +100,13 @@ $(document).ready(function() {
           players[data.id].update();
         }
         break;
+      case "ping":
+        ws.send(JSON.stringify({
+          x: player.x,
+          y: player.y,
+          t: player.type,
+        }));
+        break;  
       default:
         console.log(data);
         break;
@@ -101,7 +114,6 @@ $(document).ready(function() {
     }
   }
   startWS(url);
-
 
   $(document).keydown(function(event) {
     //console.log(event);
@@ -134,7 +146,7 @@ $(document).ready(function() {
     ws.send(JSON.stringify({
       x: player.x,
       y: player.y,
-      t: player.type
+      t: player.type,
     }));
     
   });
