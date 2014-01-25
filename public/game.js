@@ -12,6 +12,7 @@ var ws;
 window.players = players;
 
 function genMap(M) {
+  $("#main").empty();
   var map = [];
   var i =0;
   M.forEach(function(L) {
@@ -43,8 +44,8 @@ function newPlayer(map, X, Y) {
   var player = {
     x: X, 
     y: Y,
-	u: 0,
-	v: 0,
+    u: 0,
+    v: 0,
     type: 'P',
   };
   

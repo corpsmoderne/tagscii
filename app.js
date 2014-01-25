@@ -37,6 +37,13 @@ function broadcast(j, not) {
 var cat = undefined;
 var lastCat = undefined;
 
+function setCat(id) {
+  cat = clients[id];
+  cat.last.cat = true;
+  cat.timer = 5.0;
+  console.log("set CAT:"+id);
+}
+
 function addCat() {
   if (cat && cat.last) {
     delete cat.last.cat;
@@ -48,9 +55,7 @@ function addCat() {
   var id = lst[Math.floor(Math.random()*lst.length)];
 
   if (clients[id] && clients[id].last) {
-    cat = clients[id];
-    cat.last.cat = true;
-    console.log("ADD CAT:"+id);
+    setCat(id);
   }
 }
 
@@ -75,13 +80,24 @@ var clients = {};
 var players = 0;
 
 function moveClient(client) {
-  var speed =1;
+  var speed = 1;
   if (client.last.cat === true) {
-    speed = 2;
+    if (client.timer >= 1) {
+      speed = 0;
+      client.timer -= 0.1;
+      client.last.t = Math.round(client.timer).toString();
+    } else {
+      if (client.timer !== undefined) {
+        client.last.t = 'C';
+        delete client.timer;
+      }
+      speed = 2;
+    }
   }
 
   client.last.x += client.last.u*speed;
   client.last.y += client.last.v*speed;
+
 
   if (client.last.x < 0) {
     client.last.x = 0;
@@ -110,8 +126,7 @@ setInterval(function() {
         if (Math.abs(X) <= 1 && Math.abs(Y) <= 1) {
           delete cat.last.cat;
           lastCat = cat;
-          cat = clients[c];
-          cat.last.cat = true;
+          setCat(c);
           console.log("cat changed! ", lastCat.id, "->", cat.id);
           setTimeout(function() {
             lastCat = undefined;
