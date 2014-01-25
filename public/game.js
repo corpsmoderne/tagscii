@@ -65,7 +65,6 @@ function newPlayer(map, X, Y) {
     }
     if (player.x !== undefined && player.y !== undefined) {
       player.current_tile = map[player.y][player.x];
-			console.log("je m'affiche " + player.type + " sur " + player.current_tile.type);
       player.current_tile.elem.html(player.type);
       
       if (player.cat === true) {
@@ -183,25 +182,42 @@ $(document).ready(function() {
           netUpdatePlayer(p);
         });
         break;
-			case "won":
-				$('#gameOver h1').html(data.name + " WON!");
-				$('#gameOver').fadeIn(500);
-				break;
-			case "end":
-				$('#gameOver').fadeOut(500, function() {
-					map = genMap(data.map);
-					for (var p in players) {
-						var player = players[p];
-						player.setMap(map);
-					}
-					W = data.w;
-					H = data.h;
-				});
-				break;
+      case "won":
+	$('#gameOver h1').html(data.name + " WON!");
+	$('#gameOver').fadeIn(500);
+	break;
+      case "end":
+	$('#gameOver').fadeOut(500, function() {
+	  map = genMap(data.map);
+	  for (var p in players) {
+	    var player = players[p];
+	    player.setMap(map);
+	  }
+	  W = data.w;
+	  H = data.h;
+	});
+
+        $("#warmup h3").html("WARMUP: awaiting players");
+        $("#warmup").show();
+	break;
       case "r":
         map[data.y][data.x].restore();
         break; 
       case "scores":
+        console.log(data.warmup);
+        if (data.warmup && data.warmup < 10) {
+          $("#warmup h3").html("WARMUP: start in "+data.warmup);
+          $("#warmup").show();
+          if (player.last === undefined) {
+            $("#join").show();
+          }
+        } else {
+          if (data.warmup === undefined) {
+            $("#warmup").hide();
+            $("#join").hide();
+          }
+        }
+
         $("#scoreList").empty();
         data.lst.forEach(function(e) {
           var elem = $("<div class='score'>"+e.name+" : "+e.score+"</div>");
@@ -288,5 +304,10 @@ $(document).ready(function() {
     //player.update();
     player.sendInfo();
   });
-  
+
+
+  $("#join").click(function() {
+    ws.send(JSON.stringify({ t:"join"}));
+    $("#join").hide();
+  });
 });

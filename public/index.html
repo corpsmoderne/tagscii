@@ -92,6 +92,7 @@
         z-index: 10;
       display: None;
      }
+
       #gameOver h1 {
       display: block;
       width: 300px;
@@ -100,15 +101,33 @@
       font-size: 50px;
       }
 
+      #warmup {
+      position: absolute;
+
+      font-size: large;
+      width: 300px;
+
+      top: 5px;
+      left: 200px;
+      border: thin solid black;
+      }
+      #warmup h3 {
+        margin: 0px;
+      padding: 0px;
+      }
+
     </style>
   </head>
   <body>
-    <h1>TAGSCII</h1>
+    <h1>TAGSCII</h1> 
 
     <div id="gameOver"><h1>GAME OVER!</h1></div>
 
+    <div id="warmup"><h3>WARMUP: awaiting players...</h3></div>
+
     <div id="list">
-      <h3>SCORES:</h3>
+      <span style="float:right"><button id="join">JOIN!</button></span>
+      <h3>SCORES:</h3> 
       <div id="scoreList">
       </div>
       <div id="doc">
@@ -118,7 +137,7 @@
           <li>Avoid the (red) cat when you're a mouse</li>
           <li>Catch a mouse when you're the (red) cat</li>
           <li>You turn green and visible when hiding for too long!</li>
-          <li>Game over when a player reach 50 points and loose!</li>
+          <li>Game over when a player reach 60 points and loose!</li>
         </ul>
       </div>
     </div>
