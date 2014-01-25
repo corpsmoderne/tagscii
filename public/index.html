@@ -76,10 +76,36 @@
         padding-left: 2em;
       }
 
+      #timer {
+        float: right;
+      margin-right: 10px;
+      }
+
+      #gameOver {
+        position: absolute;
+        top: 100px;
+        left: 100px;
+        width: 500px;
+        height: 250px;
+        border: thick solid black;
+        background: white;
+        z-index: 10;
+      display: None;
+     }
+      #gameOver h1 {
+      display: block;
+      width: 300px;
+      margin: 0 auto;
+      margin-top: 80px;
+      font-size: 50px;
+      }
+
     </style>
   </head>
   <body>
     <h1>TAGSCII</h1>
+
+    <div id="gameOver"><h1>GAME OVER!</h1></div>
 
     <div id="list">
       <h3>SCORES:</h3>
@@ -92,6 +118,7 @@
           <li>Avoid the (red) cat when you're a mouse</li>
           <li>Catch a mouse when you're the (red) cat</li>
           <li>You turn green and visible when hiding for too long!</li>
+          <li>Game over when a player reach 50 points and loose!</li>
         </ul>
       </div>
     </div>
