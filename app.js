@@ -8,11 +8,15 @@ var S = { // SETTINGS
   W: 64,
   H: 64,
 	
-	//GAMEPLAY DEFINES
-	hideJaugeThreshold: 4.5,
-	hideJaugeMaxValue:	5.0,
-	hideJaugeStep:			0.1
+  //GAMEPLAY DEFINES
+  hideJaugeThreshold: 4.5,
+  hideJaugeMaxValue:	5.0,
+  hideJaugeStep:			0.1
 };
+
+if (process.argv.length === 3) {
+  S.PORT = parseInt(process.argv[2])
+}
 
 var express = require('express');
 var http = require('http');
