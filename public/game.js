@@ -123,16 +123,20 @@ $(document).ready(function() {
 
     switch(event.keyCode) {
     case 37: // LEFT
-      player.x -= 1;
+	  if (player.x > 0)
+		player.x -= 1;
       break;
     case 38: // UP
-      player.y -= 1;
+      if (player.y > 0)
+	    player.y -= 1;
       break;
     case 39: // RIGHT
-      player.x += 1;
+      if (player.x < W - 1)
+		player.x += 1;
       break;
     case 40: // DOWN
-      player.y += 1;
+      if (player.y < H - 1)
+		player.y += 1;
       break;
     case 32: // SPACE
       player.current_tile.type = player.type;
