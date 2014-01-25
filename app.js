@@ -228,6 +228,7 @@ function newGame() {
   map = genMap();
   won = false;
   cat = undefined;
+  worstScore = 0;
 
   for(var c in clients) {
     var client = clients[c];
