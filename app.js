@@ -12,7 +12,7 @@ var S = { // SETTINGS
   hideJaugeThreshold: 4.0,
   hideJaugeMaxValue:	5.0,
   hideJaugeStep:			0.1,
-	scoreMax:						5,
+	scoreMax:						60,
 	gameOverTimer:			5000 //ms
 };
 
