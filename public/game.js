@@ -5,7 +5,6 @@ var W;
 var H;
 var you = undefined;
 var player = undefined;
-var cat = undefined;
 var players = {};
 var ws;
 
@@ -52,8 +51,8 @@ function newPlayer(map, X, Y) {
     u: 0,
     v: 0,
     type: 'P',
-		hJ: 0,
-		visible: false
+    hJ: 0,
+    visible: false
   };
   
   function update() {
@@ -63,27 +62,31 @@ function newPlayer(map, X, Y) {
     if (player.x !== undefined && player.y !== undefined) {
       player.current_tile = map[player.y][player.x];
       player.current_tile.elem.html(player.type);
-			
+      
       if (player.cat === true) {
         player.current_tile.elem.addClass("cat");
-				player.hJ = 0;
-				player.visible = false;
+	player.hJ = 0;
+	player.visible = false;
       }
-			
-			if (player.hJ >= hideJaugeMaxValue && !player.visible == true)
-				player.visible = true;
-			else if (player.hJ < hideJaugeThreshold && player.visible == true)
-				player.visible = false;
-				
-			if (player.visible == true) {
-				player.current_tile.elem.addClass("visible");
-			}
-			if (player.you == true) {
+      
+      if (player.hJ >= hideJaugeMaxValue && !player.visible == true) {
+	player.visible = true; 
+        if (player.you === true) {
+          $("#turned")[0].play();
+        }
+      } else if (player.hJ < hideJaugeThreshold && player.visible == true) {
+	player.visible = false;
+      }
+      
+      if (player.visible == true) {
+	player.current_tile.elem.addClass("visible");
+      }
+      if (player.you == true) {
         player.current_tile.elem.addClass("player");
       }
     }
   }
-
+  
   function sendInfo() {
     ws.send(JSON.stringify({
       u: player.u,
@@ -109,13 +112,17 @@ function netUpdatePlayer(data) {
     players[data.id].x = data.x;
     players[data.id].y = data.y;
     players[data.id].type = data.t;
-		if (data.hJ === undefined)
-			players[data.id].hJ = 0;
-		else
-			players[data.id].hJ = data.hJ;
+    if (data.hJ === undefined) {
+      players[data.id].hJ = 0;
+    } else {
+      players[data.id].hJ = data.hJ;
+    }
   }
   if (data.cat === true) {
-    players[data.id].cat = true;
+    if (players[data.id].cat !== true) {
+      players[data.id].cat = true;
+      $("#catchange")[0].play();
+    }
   } else {
     delete players[data.id].cat;
   }
@@ -157,11 +164,12 @@ $(document).ready(function() {
         map = genMap(data.map);
         W = data.w;
         H = data.h;
-				hideJaugeThreshold = data.hJT;
-				hideJaugeMaxValue = data.hJM;
 
+	hideJaugeThreshold = data.hJT;
+	hideJaugeMaxValue = data.hJM;
+        
         you = data.you;
-
+        
         console.log("map loaded");
         break;
       case "all":
