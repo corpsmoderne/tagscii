@@ -43,6 +43,8 @@ function newPlayer(map, X, Y) {
   var player = {
     x: X, 
     y: Y,
+	u: 0,
+	v: 0,
     type: 'P',
   };
   
@@ -64,8 +66,8 @@ function newPlayer(map, X, Y) {
 
   function sendInfo() {
     ws.send(JSON.stringify({
-      x: player.x,
-      y: player.y,
+      u: player.u,
+      v: player.v,
       t: player.type,
     }));
   }
@@ -154,30 +156,59 @@ $(document).ready(function() {
 
     switch(event.keyCode) {
     case 37: // LEFT
-	  if (player.x > 0)
-		player.x -= 1;
+			if (player.u >= 0)
+				player.u -= 1;
       break;
     case 38: // UP
-      if (player.y > 0)
-	    player.y -= 1;
+			if (player.v >= 0)
+				player.v -= 1;
       break;
     case 39: // RIGHT
-      if (player.x < W - 1)
-		player.x += 1;
+			if (player.u <= 0)
+				player.u += 1;
       break;
     case 40: // DOWN
-      if (player.y < H - 1)
-		player.y += 1;
+			if (player.v <= 0)
+				player.v += 1;
       break;
-    case 32: // SPACE
-      player.current_tile.type = player.type;
-      console.log(player.current_tile.type);
-      break;
+    // SPACE keycode : 32
     default:
       var c = String.fromCharCode(event.keyCode).toLowerCase();
       if("abcdefghijklmnopqrstuvwxyz0123456789".indexOf(c) !== -1) {
         player.type = c;
       }
+      break;
+    }
+    //player.update();
+    player.sendInfo();
+  });
+  
+
+  $(document).keyup(function(event) {
+    //console.log(event);
+    if (player === undefined) {
+      return;
+    }
+
+    switch(event.keyCode) {
+    case 37: // LEFT
+			if (player.u <= 0)
+				player.u += 1;
+      break;
+    case 38: // UP
+			if (player.v <= 0)
+				player.v += 1;
+      break;
+    case 39: // RIGHT
+			if (player.u >= 0)
+				player.u -= 1;
+      break;
+    case 40: // DOWN
+			if (player.v >= 0)
+				player.v -= 1;
+      break;
+    // SPACE keycode : 32
+    default:
       break;
     }
     //player.update();

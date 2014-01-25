@@ -74,6 +74,20 @@ var uids = 0;
 var clients = {};
 var players = 0;
 
+function moveClient(client) {
+	client.last.x += client.last.u;
+	client.last.y += client.last.v;
+	if (client.last.x < 0)
+		client.last.x = 0;
+	else if (client.last.x >= S.W)
+		client.last.x = S.W - 1;
+		
+	if (client.last.y < 0)
+		client.last.y = 0;
+	else if (client.last.y >= S.H)
+		client.last.y = S.H - 1;
+}
+
 setInterval(function() {
   
   
@@ -83,6 +97,7 @@ setInterval(function() {
             lst : [] };
   for(var c in clients) {
     if (clients[c].last && clients[c].last.x && clients[c].last.y) {
+			moveClient(clients[c]);
       if (cat && cat != clients[c] && clients[c] !== lastCat) {
         var X = cat.last.x - clients[c].last.x;
         var Y = cat.last.y - clients[c].last.y;
@@ -127,18 +142,19 @@ wss.on('connection', function(client) {
     id: id,
     t: 'P',
     x: Math.floor(Math.random()*S.W),
-    y: Math.floor(Math.random()*S.H)
+    y: Math.floor(Math.random()*S.H),
+	u: 0,
+	v: 0
   };
   console.log(client.last);
 
   clients[id] = client;
   client.send(JSON.stringify(j));
 
-
   client.on('message', function(data) {
     var j = JSON.parse(data);
-    client.last.x = j.x;
-    client.last.y = j.y;
+    client.last.u = j.u;
+    client.last.v = j.v;
     client.last.t = j.t;
   });
   
