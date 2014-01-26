@@ -148,6 +148,7 @@ function moveClient(client) {
       } else {
         speed = 1;
       }
+
     }
   }
   

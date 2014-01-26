@@ -46,6 +46,8 @@ function genMap(M) {
   return map;
 }
 
+var lastCmd = Date.now();
+
 function newPlayer(map, X, Y) {
   var player = {
     x: X, 
@@ -94,6 +96,7 @@ function newPlayer(map, X, Y) {
   }
   
   function sendInfo() {
+    lastCmd = Date.now();
     ws.send(JSON.stringify({
       u: player.u,
       v: player.v,
@@ -103,7 +106,7 @@ function newPlayer(map, X, Y) {
   
   player.update = update;
   player.sendInfo = sendInfo;
-	player.setMap = setMap;
+  player.setMap = setMap;
   update();
   return player;
 }
@@ -135,6 +138,17 @@ function netUpdatePlayer(data) {
   }
   players[data.id].update();
 }
+
+setInterval(function() {
+  if (player === undefined) {
+    lastCmd = Date.now();
+  }
+  if (Date.now() - lastCmd > 20000 && player !== undefined) {
+    ws.close();
+    player = undefined;
+    alert("You've been kicked for inactivity...\nReload if you want to play.");
+  }
+}, 1000);
 
 $(document).ready(function() {
 
