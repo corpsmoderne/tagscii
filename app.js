@@ -53,7 +53,11 @@ var map = genMap();
 function broadcast(j, not) {
   for(var c in clients) {
     if (clients[c].id !== not) {
-      clients[c].send(JSON.stringify(j));
+      try {
+        clients[c].send(JSON.stringify(j));
+      } catch (e) {
+        console.log("BROADCAST EXCEPTION", e);
+      }
     }
   }
 }
