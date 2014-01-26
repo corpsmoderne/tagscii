@@ -150,13 +150,17 @@ $(document).ready(function() {
   function startWS(url) {
     ws = new WebSocket(url);
     ws.onclose = function(){
+      alert("Sorry, the game has crashed, we're still debugging. Reload the page and join again!");
+      /*
       console.log("connection lost, trying to reconnect...");
       setTimeout(function() {
         if (timeout < 5) {
           timeout += 1;
         }
         startWS(url);
+      
       }, timeout*1000);
+      */
     };
     ws.onopen = function(event) {
       timeout = 1;
