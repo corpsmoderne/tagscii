@@ -109,7 +109,7 @@ app.configure(function() {
 app.use("/pub", express.static(__dirname + '/public'));
 
 app.get("/", function(req, res) {
-  res.sendfile('./public/index.html');
+  res.sendfile('./public/intro.html');
 });
 
 var server = http.createServer(app);
