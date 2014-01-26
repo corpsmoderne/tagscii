@@ -15,9 +15,11 @@ INSTALLATION
 You need Node.js to run the server.
 
 To install the modules needed
+
 $ npm install 
 
 To run the server
+
 $ node app.js [PORT]
 
 PLAY ONLINE
