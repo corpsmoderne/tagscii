@@ -393,8 +393,12 @@ wss.on('connection', function(client) {
         if ((client.last.cat === true || cat === undefined) && (j.t !== undefined)) {
           // EDIT
           if (j.t !== ' ') {
-            map[client.last.y][client.last.x] = j.t;
-            broadcast({type:"t", x:client.last.x, y:client.last.y, v:j.t});
+            try {
+              map[client.last.y][client.last.x] = j.t;
+              broadcast({type:"t", x:client.last.x, y:client.last.y, v:j.t});
+            } catch(e) {
+              console.log("Set tile fail", e, client.last);
+            }
           }
           if (client.lastUV !== undefined) {
             client.last.x += client.lastUV.u;
