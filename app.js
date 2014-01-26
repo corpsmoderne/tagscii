@@ -42,10 +42,18 @@ var won = false;
 var worstScore = S.scoreMax;
 
 function genMap() {
+  var newMap = [];
   var map = require("./" + levels[Math.floor(Math.random()*levels.length)]).level;
-  S.W = map[0].length;
-  S.H = map.length;
-  return map;
+  map.forEach(function(line) {
+    var newLine = [];
+    line.forEach(function(tile) {
+      newLine.push(tile);
+    });
+    newMap.push(newLine);
+  });
+  S.W = newMap[0].length;
+  S.H = newMap.length;
+  return newMap;
 }
 var map = genMap();
 
