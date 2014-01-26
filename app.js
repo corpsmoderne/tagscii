@@ -39,7 +39,7 @@ var levels = [
 
 var won = false;
 
-var worstScore = 0;
+var worstScore = S.scoreMax;
 
 function genMap() {
   var map = require("./" + levels[Math.floor(Math.random()*levels.length)]).level;
@@ -135,7 +135,7 @@ function moveClient(client) {
         client.stimer = 0.0;
       }
       
-      client.score += 0.1;
+      client.score -= 0.1;
       
       if (client.last.u === 0 && client.last.v === 0) {
         client.stimer = 0.0;
@@ -232,12 +232,12 @@ function newGame() {
   map = genMap();
   won = false;
   cat = undefined;
-  worstScore = 0;
+  worstScore = S.scoreMax;
 
   for(var c in clients) {
     var client = clients[c];
     if (client.last !== undefined) {
-      client.score = 0;
+      client.score = S.scoreMax;
       client.last.t = 'P';
       client.last.x = Math.floor(Math.random()*S.W);
       client.last.y = Math.floor(Math.random()*S.H);
@@ -280,7 +280,7 @@ setInterval(function() {
   }
 
   for(var c in clients) {
-    worstScore = Math.max(clients[c].score, worstScore);
+    worstScore = Math.min(clients[c].score, worstScore);
   }
 
   var j = { type: "scores",
@@ -295,12 +295,12 @@ setInterval(function() {
     }
   }
   j.lst.sort(function(a, b) {
-    return a.score - b.score;
+    return b.score - a.score;
   });
   
   broadcast(j);
   
-  if (j.lst.length > 0 && j.lst[j.lst.length - 1].score !== undefined && j.lst[j.lst.length - 1].score >= S.scoreMax && won === false)
+  if (j.lst.length > 0 && j.lst[j.lst.length - 1].score !== undefined && j.lst[j.lst.length - 1].score <= 0 && won === false)
   {
     var j2 = { type:"won",
 	       name: j.lst[0].name};
@@ -336,7 +336,7 @@ wss.on('connection', function(client) {
   
   client.id = id;
 
-  client.score = 0;
+  client.score = S.scoreMax;
   
   var j = {
     type: "map",

@@ -164,7 +164,9 @@ $(document).ready(function() {
   function startWS(url) {
     ws = new WebSocket(url);
     ws.onclose = function(){
-      alert("Sorry, the game has crashed, we're still debugging. Reload the page and join again!");
+      if (player === undefined) {
+        alert("Sorry, the game has crashed, we're still debugging. Reload the page and join again!");
+      }
       /*
       console.log("connection lost, trying to reconnect...");
       setTimeout(function() {
@@ -277,7 +279,6 @@ $(document).ready(function() {
       }
       break;
     }
-    //player.update();
     player.sendInfo();
   });
   
