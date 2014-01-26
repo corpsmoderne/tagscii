@@ -59,9 +59,9 @@ function newPlayer(map, X, Y) {
     visible: false
   };
 	
-	function setMap(Map) {
-		map = Map;
-	}
+  function setMap(Map) {
+    map = Map;
+  }
   
   function update() {
     if (player.current_tile !== undefined) {
@@ -95,13 +95,14 @@ function newPlayer(map, X, Y) {
     }
   }
   
-  function sendInfo() {
+  function sendInfo(sendT) {
     lastCmd = Date.now();
-    ws.send(JSON.stringify({
+    var j = {
       u: player.u,
       v: player.v,
-      t: player.type,
-    }));
+    }
+    j.t = sendT;
+    ws.send(JSON.stringify(j));
   }
   
   player.update = update;
@@ -220,6 +221,11 @@ $(document).ready(function() {
       case "r":
         map[data.y][data.x].restore();
         break; 
+      case "t":
+        // EDIT
+        map[data.y][data.x].type = data.v;
+        map[data.y][data.x].elem.html(data.v);
+        break;
       case "log":
 	var logLine = $("<span class='logEntry'>" + data.content + "<br/></span>");
 	$("#log").prepend(logLine);
@@ -253,7 +259,7 @@ $(document).ready(function() {
     if (player === undefined) {
       return;
     }
-
+    var sendT = undefined;
     switch(event.keyCode) {
     case 37: // LEFT
       if (player.u >= 0)
@@ -272,14 +278,18 @@ $(document).ready(function() {
 	player.v += 1;
       break;
       // SPACE keycode : 32
+    case 32:
+      sendT = ' ';
+      break;
     default:
       var c = String.fromCharCode(event.keyCode).toLowerCase();
       if("abcdefghijklmnopqrstuvwxyz0123456789".indexOf(c) !== -1) {
         player.type = c;
+        sendT = c;
       }
       break;
     }
-    player.sendInfo();
+    player.sendInfo(sendT);
   });
   
   
@@ -311,7 +321,7 @@ $(document).ready(function() {
       break;
     }
     //player.update();
-    player.sendInfo();
+    player.sendInfo(undefined);
   });
 
 

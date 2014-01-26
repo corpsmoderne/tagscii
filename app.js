@@ -374,14 +374,32 @@ wss.on('connection', function(client) {
       
     } else {
       if (client.last) {
-        client.last.u = j.u;
-        client.last.v = j.v;
+        if (client.last.u !== 0 || client.last.v !== 0) {
+          client.lastUV = { u:client.last.u, v:client.last.v };
+        }
       
-        if (client.last.cat === true && client.last.t !== j.t) {
+        if (client.last.cat === true && client.last.t !== j.t && j.t !== undefined) {
           client.stimer = 0.0;
         }
       
-        client.last.t = j.t;
+        if ((client.last.cat === true || cat === undefined) && (j.t !== undefined)) {
+          // EDIT
+          if (j.t !== ' ') {
+            map[client.last.y][client.last.x] = j.t;
+            broadcast({type:"t", x:client.last.x, y:client.last.y, v:j.t});
+          }
+          if (client.lastUV !== undefined) {
+            client.last.x += client.lastUV.u;
+            client.last.y += client.lastUV.v;
+          }
+        } else {
+          client.last.u = j.u;
+          client.last.v = j.v;
+        }
+
+        if (j.t !== undefined && j.t !== ' ') {
+          client.last.t = j.t;
+        }
       }
     }
   });
