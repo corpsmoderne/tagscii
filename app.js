@@ -190,7 +190,7 @@ function checkCatCollision(client) {
       delete cat.last.cat;
       cat.last.hJ = 0;
       console.log("cat changed! ", cat.id, "->", client.id);
-      addToLog(cat.name + " tagged " + client.name + "!");
+      addToLog(cat.name + " tags " + client.name + "!");
       setCat(client.id);
     }
   }
@@ -229,7 +229,7 @@ function updateHideJauge(client) {
     else if (client.last.hJ >= S.hideJaugeMaxValue) {
       if (client.visible === false) {
 	client.visible = true;
-	addToLog(client.name + " has become visible!");
+	addToLog(client.name + " is visible!");
       }
       client.last.hJ = S.hideJaugeMaxValue;
     }
