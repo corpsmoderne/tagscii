@@ -27,4 +27,4 @@ PLAY ONLINE
 
 You can play the game online here:
 
-http://corpsmoderne.net:8080/pub/index.html
+http://corpsmoderne.net:8080/
