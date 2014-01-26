@@ -33,7 +33,6 @@ var levels = [
   "LVL_Level_13_C.js",
   "LVL_Level_14_D.js",
   "LVL_Level_15_E.js",
-  "LVL_Level_15_F.js",
   "LVL_Level_16_F.js",
   "LVL_Level_17_G.js"
 ];
