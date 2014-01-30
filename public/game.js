@@ -204,20 +204,20 @@ $(document).ready(function() {
         });
         break;
       case "won":
-	$('#gameOver h1').html(data.name + " WON!");
-	$('#gameOver').fadeIn(500);
-	break;
+        $('#gameOver h1').html(data.name + " WON!");
+        $('#gameOver').fadeIn(500);
+        break;
       case "end":
-	$('#gameOver').fadeOut(500, function() {
-	  map = genMap(data.map);
-	  for (var p in players) {
-	    var player = players[p];
-	    player.setMap(map);
-	  }
-	  W = data.w;
-	  H = data.h;
-	});
-	break;
+        $('#gameOver').fadeOut(500, function() {
+          map = genMap(data.map);
+          for (var p in players) {
+            var player = players[p];
+            player.setMap(map);
+          }
+          W = data.w;
+          H = data.h;
+        });
+        break;
       case "r":
         map[data.y][data.x].restore();
         break; 
@@ -227,11 +227,11 @@ $(document).ready(function() {
         map[data.y][data.x].elem.html(data.v);
         break;
       case "log":
-	var logLine = $("<span class='logEntry'>" + data.content + "<br/></span>");
-	$("#log").prepend(logLine);
-	if ($("#log").children().length > maxLogEntries) {
-	  $("#log").children().last().remove();
-	}
+        var logLine = $("<span class='logEntry'>" + data.content + "<br/></span>");
+        $("#log").prepend(logLine);
+        if ($("#log").children().length > maxLogEntries) {
+          $("#log").children().last().remove();
+        }
         break; 
       case "scores":
         $("#scoreList").empty();
@@ -263,19 +263,19 @@ $(document).ready(function() {
     switch(event.keyCode) {
     case 37: // LEFT
       if (player.u >= 0)
-	player.u -= 1;
+        player.u -= 1;
       break;
     case 38: // UP
       if (player.v >= 0)
-	player.v -= 1;
+        player.v -= 1;
       break;
     case 39: // RIGHT
       if (player.u <= 0)
-	player.u += 1;
+        player.u += 1;
       break;
     case 40: // DOWN
       if (player.v <= 0)
-	player.v += 1;
+        player.v += 1;
       break;
       // SPACE keycode : 32
     case 32:
@@ -302,19 +302,19 @@ $(document).ready(function() {
     switch(event.keyCode) {
     case 37: // LEFT
       if (player.u <= 0)
-	player.u += 1;
+        player.u += 1;
       break;
     case 38: // UP
       if (player.v <= 0)
-	player.v += 1;
+        player.v += 1;
       break;
     case 39: // RIGHT
       if (player.u >= 0)
-	player.u -= 1;
+        player.u -= 1;
       break;
     case 40: // DOWN
       if (player.v >= 0)
-	player.v -= 1;
+        player.v -= 1;
       break;
       // SPACE keycode : 32
     default:

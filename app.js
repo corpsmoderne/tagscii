@@ -14,7 +14,8 @@ var S = { // SETTINGS
   hideJaugeStep: 0.1,
   scoreMax: 60,
   gameOverTimer: 5000, //ms
-  maxStillTime: 0.5
+  maxStillTime: 0.5,
+  minPlayerNb: 5
   
 };
 
@@ -228,8 +229,8 @@ function updateHideJauge(client) {
     }
     else if (client.last.hJ >= S.hideJaugeMaxValue) {
       if (client.visible === false) {
-	client.visible = true;
-	addToLog(client.name + " is visible!");
+        client.visible = true;
+        addToLog(client.name + " is visible!");
       }
       client.last.hJ = S.hideJaugeMaxValue;
     }
@@ -329,15 +330,143 @@ setInterval(function() {
               lst : [] };
     for(var c in clients) {
       if (clients[c].last !== undefined && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
-	moveClient(clients[c]);
-	checkCatCollision(clients[c]);
-	updateHideJauge(clients[c]);
-	j.lst.push(clients[c].last);
+        moveClient(clients[c]);
+        checkCatCollision(clients[c]);
+        updateHideJauge(clients[c]);
+        j.lst.push(clients[c].last);
       }
     }
     broadcast(j);
   }
 }, 100);
+
+function manageBotsNumber()
+{
+  while (players < S.minPlayerNb) {
+    addBot();
+  }
+  while (players > S.minPlayerNb) {
+    for (var c in clients) {
+      var client = clients[c];
+      if (client.bot !== undefined)
+      {
+        removeBot(c);
+        break;
+      }
+    }
+  }
+}
+
+function removeBot(id) {
+  
+  if (cat && cat.id == id) {
+    cat = undefined;
+  }
+
+  var x = undefined;
+  var y = undefined;
+
+  if (clients[id].last) {
+    addToLog(clients[id].name + " left!");
+    x = clients[id].last.x;
+    y = clients[id].last.y;
+    players--;
+  }
+
+  delete clients[id];
+
+  if (x !== undefined && y !== undefined) {
+    broadcast({ type:"r", x:x, y:y });
+  }
+  
+  if (cat === undefined && players > 1) {
+    addCat();
+  }
+  
+  if (players <= 1) {
+    setTimeout(function() {
+      newGame();
+    }, 2000);
+  }
+  
+}
+
+function addBot() {
+  var id = uids;
+  uids++;
+  
+  var bot = {
+    id: id,
+    score: worstScore
+  }
+  
+  bot.last = {
+    id: id,
+    t: 'P',
+    x: Math.floor(Math.random()*S.W),
+    y: Math.floor(Math.random()*S.H),
+    u: 0,
+    v: 0,
+    hJ: 0
+  };
+  
+  bot.bot = true;
+  bot.name = "bot " + bot.last.id;
+  
+  players++;
+  
+  var j = {
+    type: "map",
+    map: map,
+    w: S.W,
+    h: S.H,
+    you: id,
+    hJT: S.hideJaugeThreshold,
+    hJM: S.hideJaugeMaxValue
+  };
+  
+  clients[id] = bot;
+  bot.send = function(e) {
+  };
+  
+  addToLog(bot.name + " joins!");
+  
+}
+
+function processClientInput(client, j) {// receiving inputs : u,v and t
+  if (client.last) {
+    if (client.last.u !== 0 || client.last.v !== 0) {
+      client.lastUV = { u:client.last.u, v:client.last.v };
+    }
+  
+    if (client.last.cat === true && client.last.t !== j.t && j.t !== undefined) {
+      client.stimer = 0.0;
+    }
+  
+    if ((client.last.cat === true || cat === undefined) && (j.t !== undefined)) {
+      // EDIT
+      if (j.t !== ' ') {
+        try {
+          map[client.last.y][client.last.x] = j.t;
+          broadcast({type:"t", x:client.last.x, y:client.last.y, v:j.t});
+        } catch(e) {
+          console.log("Set tile fail", e, client.last);
+        }
+      }
+      if (client.lastUV !== undefined) {
+        client.last.x += client.lastUV.u;
+        client.last.y += client.lastUV.v;
+      }
+    } else {
+      client.last.u = j.u;
+      client.last.v = j.v;
+    }
+
+    if (j.t !== undefined && j.t !== ' ') {
+      client.last.t = j.t;
+    }
+  }
+}
 
 var wss = new ws.Server({server: server});
 wss.on('connection', function(client) {
@@ -369,6 +498,7 @@ wss.on('connection', function(client) {
       client.name = j.n;
     } else if (j.t === "join") {
 
+      addToLog(clients[id].name + " joins!");
       players++;
 
       client.score = worstScore;
@@ -383,39 +513,10 @@ wss.on('connection', function(client) {
         hJ: 0
       };
       
+      manageBotsNumber();
+      
     } else {
-      if (client.last) {
-        if (client.last.u !== 0 || client.last.v !== 0) {
-          client.lastUV = { u:client.last.u, v:client.last.v };
-        }
-      
-        if (client.last.cat === true && client.last.t !== j.t && j.t !== undefined) {
-          client.stimer = 0.0;
-        }
-      
-        if ((client.last.cat === true || cat === undefined) && (j.t !== undefined)) {
-          // EDIT
-          if (j.t !== ' ') {
-            try {
-              map[client.last.y][client.last.x] = j.t;
-              broadcast({type:"t", x:client.last.x, y:client.last.y, v:j.t});
-            } catch(e) {
-              console.log("Set tile fail", e, client.last);
-            }
-          }
-          if (client.lastUV !== undefined) {
-            client.last.x += client.lastUV.u;
-            client.last.y += client.lastUV.v;
-          }
-        } else {
-          client.last.u = j.u;
-          client.last.v = j.v;
-        }
-
-        if (j.t !== undefined && j.t !== ' ') {
-          client.last.t = j.t;
-        }
-      }
+      processClientInput(client, j);
     }
   });
   
@@ -429,6 +530,7 @@ wss.on('connection', function(client) {
     var y = undefined;
 
     if (clients[id].last) {
+      addToLog(clients[id].name + " left!");
       x = clients[id].last.x;
       y = clients[id].last.y;
       players--;
