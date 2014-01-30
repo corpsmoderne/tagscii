@@ -330,6 +330,7 @@ setInterval(function() {
               lst : [] };
     for(var c in clients) {
       if (clients[c].last !== undefined && clients[c].last.x !== undefined && clients[c].last.y !== undefined) {
+        updateAI(clients[c]);
         moveClient(clients[c]);
         checkCatCollision(clients[c]);
         updateHideJauge(clients[c]);
@@ -339,6 +340,134 @@ setInterval(function() {
     broadcast(j);
   }
 }, 100);
+
+function processClientInput(client, j) {// receiving inputs : u,v and t
+  if (client.last) {
+    if (client.last.u !== 0 || client.last.v !== 0) {
+      client.lastUV = { u:client.last.u, v:client.last.v };
+    }
+  
+    if (client.last.cat === true && client.last.t !== j.t && j.t !== undefined) {
+      client.stimer = 0.0;
+    }
+  
+    if ((client.last.cat === true || cat === undefined) && (j.t !== undefined)) {
+      // EDIT
+      if (j.t !== ' ') {
+        try {
+          map[client.last.y][client.last.x] = j.t;
+          broadcast({type:"t", x:client.last.x, y:client.last.y, v:j.t});
+        } catch(e) {
+          console.log("Set tile fail", e, client.last);
+        }
+      }
+      if (client.lastUV !== undefined) {
+        client.last.x += client.lastUV.u;
+        client.last.y += client.lastUV.v;
+      }
+    } else {
+      client.last.u = j.u;
+      client.last.v = j.v;
+    }
+
+    if (j.t !== undefined && j.t !== ' ') {
+      client.last.t = j.t;
+    }
+  }
+}
+
+function isVisible(client) {
+  var onSameTile = map[client.last.y][client.last.x] == client.last.t;
+  var visible = client.visible === true;
+  return visible || !onSameTile;
+}
+
+function getClosestClient(client) {
+  var minDist = 100;
+  var curDist;
+  var target = undefined;
+
+  for (var c in clients) {
+    var other = clients[c];
+    if (other !== client && isVisible(other)) {
+      curDist = Math.max(Math.abs(client.last.x - other.last.x), Math.abs(client.last.y - other.last.y));
+      if (curDist < minDist) {
+        minDist = curDist;
+        target = other;
+      }
+    }
+  }
+  return target;
+}
+
+function updateAI(client) {
+  if (client.bot !== undefined) {
+    var j = {
+      u: 0,
+      v: 0
+    };
+    if (client.last.cat === true) {
+      // update bot behaviour as a cat
+      // for now, naively run towards the closest "seeable" player
+      var target = getClosestClient(client);
+      if (target !== undefined) {
+        if (Math.abs(target.last.x - client.last.x) > 1) {
+          if (target.last.x - client.last.x > 0) {
+            j.u = 1;
+          } else {
+            j.u = -1;
+          }
+        }
+        if (Math.abs(target.last.y - client.last.y) > 1) {
+          if (target.last.y - client.last.y > 0) {
+            j.v = 1;
+          } else {
+            j.v = -1;
+          }
+        }
+      }
+    } else {
+      // update bot behaviour as a player
+      // for now, naively run in opposite direction of the cat. If far enough, move randomly.
+      var tile = map[client.last.y][client.last.x];
+      if (tile != client.last.t) {
+        var c = tile.charCodeAt(0);
+        if ((c >= 97 && c<= 122) || (c >= 48 && c<= 57)){ /* is alphanumeric */
+          j.t = tile;
+        }
+      }
+      if (cat !== undefined) {
+        var distX = Math.abs(client.last.x - cat.last.x);
+        var distY = Math.abs(client.last.y - cat.last.y);
+        if (distX > 1 && distX < 25) {
+          if (client.last.x - cat.last.x > 0) {
+            j.u = 1;
+          } else {
+            j.u = -1;
+          }
+        }
+        else if (Math.random() < 0.5) {
+          j.u = 1;
+        } else {
+          j.u = -1;
+        }
+        if (distY > 1 && distY < 25) {
+          if (client.last.y - cat.last.y > 0) {
+            j.v = 1;
+          } else {
+            j.v = -1;
+          }
+        }
+        else if (Math.random() < 0.5) {
+          j.v = 1;
+        } else {
+          j.v = -1;
+        }
+      }
+    }
+    processClientInput(client, j);
+  }
+}
 
 function manageBotsNumber()
 {
@@ -433,41 +562,6 @@ function addBot() {
   
 }
 
-function processClientInput(client, j) {// receiving inputs : u,v and t
-  if (client.last) {
-    if (client.last.u !== 0 || client.last.v !== 0) {
-      client.lastUV = { u:client.last.u, v:client.last.v };
-    }
-  
-    if (client.last.cat === true && client.last.t !== j.t && j.t !== undefined) {
-      client.stimer = 0.0;
-    }
-  
-    if ((client.last.cat === true || cat === undefined) && (j.t !== undefined)) {
-      // EDIT
-      if (j.t !== ' ') {
-        try {
-          map[client.last.y][client.last.x] = j.t;
-          broadcast({type:"t", x:client.last.x, y:client.last.y, v:j.t});
-        } catch(e) {
-          console.log("Set tile fail", e, client.last);
-        }
-      }
-      if (client.lastUV !== undefined) {
-        client.last.x += client.lastUV.u;
-        client.last.y += client.lastUV.v;
-      }
-    } else {
-      client.last.u = j.u;
-      client.last.v = j.v;
-    }
-
-    if (j.t !== undefined && j.t !== ' ') {
-      client.last.t = j.t;
-    }
-  }
-}
-
 var wss = new ws.Server({server: server});
 wss.on('connection', function(client) {
   var id = uids;
@@ -551,6 +645,9 @@ wss.on('connection', function(client) {
       setTimeout(function() {
         newGame();
       }, 2000);
+    }
+    else {
+      manageBotsNumber();
     }
 
   });
