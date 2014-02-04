@@ -11,11 +11,12 @@ var S = { // SETTINGS
   //GAMEPLAY DEFINES
   hideJaugeThreshold: 4.0,
   hideJaugeMaxValue: 5.0,
-  hideJaugeStep: 0.1,
   scoreMax: 60,
   gameOverTimer: 5000, //ms
   maxStillTime: 0.5,
-  minPlayerNb: 5
+  catRunThreshold: 0.5,
+  minPlayerNb: 5,
+  tickValue: 0.1
   
 };
 
@@ -40,6 +41,29 @@ var levels = [
   "LVL_ClasseAm"
   
 ];
+
+// AI SETTINGS
+
+var MOUSE_VISIBLE_DISTANCE = 25;
+var MOUSE_HIDDEN_DISTANCE = 5;
+var MOUSE_STAY_HIDDEN_PROB = 0.4;
+var MOUSE_STOP_FLEEING_DIST_MALUS = 2;
+var CAT_CHANGE_TARGET_MAX_TIME = 5;
+var CAT_REFRESH_TARGET_MAX_TIME = 0.2;
+
+
+var mouseAIState = {
+  MAI_HIDING: 0,
+  MAI_MOVING: 1,
+  MAI_FLEEING: 2
+};
+
+var catAIState = {
+  CAI_IDLE: 0,
+  CAI_CHASING: 1,
+  CAI_SEARCHING: 2
+};
+
 
 var won = false;
 
@@ -76,19 +100,28 @@ function broadcast(j, not) {
 var cat = undefined;
 
 function setCat(id) {
+  // transform old cat into mouse IFP
+  if (cat && cat.last) {
+    delete cat.last.cat;
+    cat.last.hJ = 0;
+    if (cat.bot === true) {
+      initMouseBot(cat);
+    }
+  }
+  
+  // transform old mouse into cat
   cat = clients[id];
   cat.last.cat = true;
   cat.timer = 5.0;
   delete cat.last.hJ;
   delete cat.stillTimer;
-  console.log("set CAT:"+id);
+  if (cat.bot === true) {
+    initCatBot(cat);
+  }
 }
 
 function addCat() {
-  if (cat && cat.last) {
-    delete cat.last.cat;
-    cat.last.hJ = 0;
-  }
+
   var lst = [];
   for(var e in clients) {
     if (clients[e].last !== undefined) {
@@ -135,7 +168,7 @@ function moveClient(client) {
   var speed = 1;
   if (client.last.cat === true) {
     if (client.timer >= 1) {
-      client.timer -= 0.1;
+      client.timer -= S.tickValue;
     }
     if (client.timer >= 1) {
       speed = 0;
@@ -147,15 +180,15 @@ function moveClient(client) {
         client.stimer = 0.0;
       }
       
-      client.score -= 0.1;
+      client.score -= S.tickValue;
       
       if (client.last.u === 0 && client.last.v === 0) {
         client.stimer = 0.0;
       } else {
-        client.stimer += 0.1;
+        client.stimer += S.tickValue;
       }
       
-      if (client.stimer > 0.5) {
+      if (client.stimer > S.catRunThreshold) {
         speed = 2;
       } else {
         speed = 1;
@@ -166,7 +199,6 @@ function moveClient(client) {
   
   client.last.x += client.last.u*speed;
   client.last.y += client.last.v*speed;
-  
   
   if (client.last.x < 0) {
     client.last.x = 0;
@@ -188,9 +220,6 @@ function checkCatCollision(client) {
     var X = cat.last.x - client.last.x;
     var Y = cat.last.y - client.last.y;
     if (Math.abs(X) <= 1 && Math.abs(Y) <= 1) {
-      delete cat.last.cat;
-      cat.last.hJ = 0;
-      console.log("cat changed! ", cat.id, "->", client.id);
       addToLog(cat.name + " tags " + client.name + "!");
       setCat(client.id);
     }
@@ -204,13 +233,13 @@ function updateHideJauge(client) {
     var addToJauge = false;
     if (client.last.u === 0.0 && client.last.v === 0.0) {
       if (client.stillTimer === undefined) {
-	client.stillTimer = 0;
+        client.stillTimer = 0;
       }
       if (client.stillTimer < S.maxStillTime) {
-	client.stillTimer += 0.1;
+        client.stillTimer += S.tickValue;
       }
       else {
-	addToJauge = true;
+        addToJauge = true;
       }
     }
     else {
@@ -218,10 +247,10 @@ function updateHideJauge(client) {
     }
     addToJauge = addToJauge || client.last.t == map[client.last.y][client.last.x];
     if (addToJauge) {
-      client.last.hJ += S.hideJaugeStep;
+      client.last.hJ += S.tickValue;
     }
     else {
-      client.last.hJ -= S.hideJaugeStep;
+      client.last.hJ -= S.tickValue;
     }
     
     if (client.last.hJ < 0) {
@@ -376,13 +405,18 @@ function processClientInput(client, j) {// receiving inputs : u,v and t
   }
 }
 
+
+//////////////////////////////
+//  BOT CODE SECTION
+//////////////////////////////
+
 function isVisible(client) {
   var onSameTile = map[client.last.y][client.last.x] == client.last.t;
   var visible = client.visible === true;
   return visible || !onSameTile;
 }
 
-function getClosestClient(client) {
+function getClosestVisibleClient(client) {
   var minDist = 100;
   var curDist;
   var target = undefined;
@@ -400,6 +434,53 @@ function getClosestClient(client) {
   return target;
 }
 
+function botCat_GoChasing(bot, target) {
+  bot.botCatData.state = catAIState.CAI_CHASING;
+  bot.botCatData.target = target;
+  bot.botCatData.targetX = target.last.x;
+  bot.botCatData.targetY = target.last.y;
+  bot.botCatData.changeTargetTimer = 0;
+  bot.botCatData.refreshTargetTimer = 0;
+}
+
+function botCat_GoSearching(bot, targetX, targetY) {
+  bot.botCatData.state = catAIState.CAI_SEARCHING;
+  delete bot.botCatData.target;
+  bot.botCatData.targetX = targetX;
+  bot.botCatData.targetY = targetY;
+  bot.botCatData.changeTargetTimer = 0;
+  bot.botCatData.refreshTargetTimer = 0;
+  bot.botCatData.targetTile = map[targetY][targetX];
+}
+
+function botCat_GoIdle(bot) {
+  var pos = randomPos();
+  bot.botCatData.state = catAIState.CAI_IDLE;
+  delete bot.botCatData.target;
+  bot.botCatData.targetX = pos.x;
+  bot.botCatData.targetY = pos.y;
+  bot.botCatData.changeTargetTimer = 0;
+  bot.botCatData.refreshTargetTimer = 0;
+}
+
+function botMouse_GetNewAppearance(bot) {
+  // update bot appearance : for now, naively hide whenever possible
+  var tile = map[bot.last.y][bot.last.x];
+  if (bot.visible === true) {
+    if (tile == bot.last.t) {
+      return String.fromCharCode(97 + Math.floor(Math.random() * 26)); /* any letter */
+    }
+  } else {
+    if (tile != bot.last.t) {
+      var c = tile.charCodeAt(0);
+      if ((c >= 97 && c<= 122) || (c >= 48 && c<= 57)){ /* is alphanumeric */
+        return tile;
+      }
+    }
+  }
+  return null;
+}
+
 function updateAI(client) {
   if (client.bot !== undefined) {
     var j = {
@@ -408,65 +489,297 @@ function updateAI(client) {
     };
     if (client.last.cat === true) {
       // update bot behaviour as a cat
-      // for now, naively run towards the closest "seeable" player
-      var target = getClosestClient(client);
-      if (target !== undefined) {
-        if (Math.abs(target.last.x - client.last.x) > 1) {
-          if (target.last.x - client.last.x > 0) {
-            j.u = 1;
+      var bcData = client.botCatData;
+      switch (bcData.state) {
+        case catAIState.CAI_IDLE:
+          var target = getClosestVisibleClient(client);
+          if (target === undefined) {
+            if (Math.abs(client.last.x - bcData.targetX) <=1 && Math.abs(client.last.y - bcData.targetY) <= 1) {
+              // change target pos
+              var pos = randomPos();
+              bcData.targetX = pos.x;
+              bcData.targetY = pos.y;
+            }
+            else {
+              // going to target
+              var targetX = bcData.targetX - client.last.x;
+              var targetY = bcData.targetY - client.last.y;
+              if (targetX > 0) {
+                j.u = 1;
+              } else if (targetX < 0){
+                j.u = -1;
+              }
+              if (targetY > 0) {
+                j.v = 1;
+              } else if (targetY < 0) {
+                j.v = -1;
+              }
+            }
           } else {
-            j.u = -1;
+            botCat_GoChasing(client, target);
           }
-        }
-        if (Math.abs(target.last.y - client.last.y) > 1) {
-          if (target.last.y - client.last.y > 0) {
-            j.v = 1;
+          break;
+        case catAIState.CAI_CHASING:
+          if (bcData.target === undefined) {
+            botCat_GoIdle(bot); //disconnect ?
           } else {
-            j.v = -1;
+            var isTargetVisible = isVisible(bcData.target);
+            bcData.refreshTargetTimer += S.tickValue;
+            if (isTargetVisible) {
+              bcData.changeTargetTimer = 0;
+            } else {
+              bcData.changeTargetTimer += S.tickValue;
+            }
+            
+            if (bcData.changeTargetTimer >= CAT_CHANGE_TARGET_MAX_TIME) {
+              var target = getClosestVisibleClient(client);
+              if (target !== undefined && target !== bcData.target) {
+                botCat_GoChasing(client, target);
+              }
+            }
+            
+            if (bcData.refreshTargetTimer >= CAT_REFRESH_TARGET_MAX_TIME) {
+              // re-evaluate target
+              bcData.refreshTargetTimer = 0;
+              var target = getClosestVisibleClient(client);
+              if (target !== undefined && target !== bcData.target) {
+                //other target closer or more visible. Decide whether to change target or not
+                var distToNew = Math.max(Math.abs(target.last.x - client.last.x), Math.abs(target.last.y - client.last.y));
+                var distToOld = Math.max(Math.abs(client.last.x - bcData.targetX), Math.abs(client.last.y - bcData.targetY));
+                if (distToNew * 3 < distToOld) { // au pif
+                  botCat_GoChasing(client, target);
+                }
+              }
+              //update target position
+              if (isVisible(bcData.target)) {
+                bcData.targetX = bcData.target.last.x;
+                bcData.targetY = bcData.target.last.y;
+                bcData.changeTargetTimer = 0;
+              }
+            }
+            
+            var targetX = bcData.targetX - client.last.x;
+            var targetY = bcData.targetY - client.last.y;
+            var distX = Math.abs(targetX);
+            var distY = Math.abs(targetY);
+            if (distX <= 1 && distY <= 1) {
+              // arrived to target, switch to searching
+              botCat_GoSearching(client, bcData.targetX, bcData.targetY);
+            } else {
+              // move to target
+              if (distX > 1) {
+                if (targetX > 0) {
+                  j.u = 1;
+                } else {
+                  j.u = -1;
+                }
+              }
+              if (distY > 1) {
+                if (targetY > 0) {
+                  j.v = 1;
+                } else {
+                  j.v = -1;
+                }
+              }
+            }
           }
-        }
+          break;
+        case catAIState.CAI_SEARCHING:
+          bcData.changeTargetTimer += S.tickValue;
+          
+          var target = getClosestVisibleClient(client);
+          if (target !== undefined) {
+            // target visible. Decide whether to chase or continue searching for closer target
+            var distToNew = Math.max(Math.abs(target.last.x - client.last.x), Math.abs(target.last.y - client.last.y));
+            if (distToNew < bcData.changeTargetTimer * 10 || bcData.changeTargetTimer >= CAT_CHANGE_TARGET_MAX_TIME) { // au pif
+              botCat_GoChasing(client, target);
+            }
+          }
+          
+          var curX = client.last.x;
+          var curY = client.last.y;
+          var possibleUVs = [];
+          var forward = false;
+          for (var i = -1; i < 2 && !forward; ++i) {
+            for (var k = -1; k < 2 && !forward; ++k) {
+              if ((i === 0 && k === 0 ) || curX + i < 0 || curX + i >= S.W || curY + k < 0 || curY + k >= S.H) {
+                continue;
+              } else if (map[curY + k][curX + i] == bcData.targetTile) {
+                if (i == client.lastUV.u && k == client.lastUV.v) {
+                  forward = true;
+                } else {
+                  var vec = {
+                    u: i,
+                    v: k
+                  };
+                  possibleUVs.push(vec);
+                }
+              }
+            }
+          }
+
+          // TODO : plan random direction changes ?
+          if (forward === true) {
+            j.u = client.lastUV.u;
+            j.v = client.lastUV.v;
+          } else if (possibleUVs.length > 0) {
+            var rand = Math.floor(Math.random() * possibleUVs.length);
+            j.u = possibleUVs[rand].u;
+            j.v = possibleUVs[rand].v;
+          }
+          break;
       }
     } else {
-      // update bot behaviour as a player
-      // for now, naively run in opposite direction of the cat. If far enough, move randomly.
-      var tile = map[client.last.y][client.last.x];
-      if (tile != client.last.t) {
-        var c = tile.charCodeAt(0);
-        if ((c >= 97 && c<= 122) || (c >= 48 && c<= 57)){ /* is alphanumeric */
-          j.t = tile;
-        }
-      }
-      if (cat !== undefined) {
-        var distX = Math.abs(client.last.x - cat.last.x);
-        var distY = Math.abs(client.last.y - cat.last.y);
-        if (distX > 1 && distX < 25) {
-          if (client.last.x - cat.last.x > 0) {
-            j.u = 1;
-          } else {
-            j.u = -1;
+      // update bot behaviour as a mouse
+      // for now, naively run in opposite direction of the cat. If far enough, move randomly.      
+      switch (client.botMouseData.state) {
+        case mouseAIState.MAI_HIDING:
+          // naively stay and hide
+          // TODO
+          if (cat === undefined || isVisible(client)) {          
+            client.botMouseData.state = mouseAIState.MAI_MOVING;
+            findMouseTargetPosition(client);
+          } else if ( Math.abs(client.last.x - cat.last.x) < MOUSE_HIDDEN_DISTANCE &&
+                      Math.abs(client.last.y - cat.last.y) < MOUSE_HIDDEN_DISTANCE) {
+            client.botMouseData.state = mouseAIState.MAI_FLEEING;
           }
-        }
-        else if (Math.random() < 0.5) {
-          j.u = 1;
-        } else {
-          j.u = -1;
-        }
-        if (distY > 1 && distY < 25) {
-          if (client.last.y - cat.last.y > 0) {
-            j.v = 1;
-          } else {
-            j.v = -1;
+          break;
+        case mouseAIState.MAI_MOVING:
+          // check if go fleeing
+          var flee = false;
+          if (cat !== undefined) {
+            var maxDist;
+            if (isVisible(client))
+              maxDist = MOUSE_VISIBLE_DISTANCE;
+            else
+              maxDist = MOUSE_HIDDEN_DISTANCE;
+            if (Math.abs(client.last.x - cat.last.x) < maxDist && Math.abs(client.last.y - cat.last.y) < maxDist) {
+              flee = true;
+            }
           }
-        }
-        else if (Math.random() < 0.5) {
-          j.v = 1;
-        } else {
-          j.v = -1;
-        }
+          if (flee === true) {
+              client.botMouseData.state = mouseAIState.MAI_FLEEING;
+          } else {
+            // go towards target
+            if (client.last.x == client.botMouseData.targetX && client.last.y == client.botMouseData.targetY) {
+              // arrived
+              if (!isVisible(client) && Math.random() < MOUSE_STAY_HIDDEN_PROB) {
+                client.botMouseData.state = mouseAIState.MAI_HIDING;
+              } else {
+                findMouseTargetPosition(client);
+              }
+            }
+            else {
+              // going to target
+              var targetX = client.botMouseData.targetX - client.last.x;
+              var targetY = client.botMouseData.targetY - client.last.y;
+              if (targetX > 0) {
+                j.u = 1;
+              } else if (targetX < 0){
+                j.u = -1;
+              }
+              if (targetY > 0) {
+                j.v = 1;
+              } else if (targetY < 0) {
+                j.v = -1;
+              }
+            }
+            // update mouse appearance
+            var tile = botMouse_GetNewAppearance(client);
+            if (tile != null) {
+              j.t = tile;
+            }
+          }
+          break;
+        case mouseAIState.MAI_FLEEING:
+          if (cat === undefined) {  // disconnect ?
+            client.botMouseData.state = mouseAIState.MAI_MOVING;
+            findMouseTargetPosition(client);
+          } else {
+            var deltaCatX = client.last.x - cat.last.x;
+            var deltaCatY = client.last.y - cat.last.y;
+            var distCatX = Math.abs(deltaCatX);
+            var distCatY = Math.abs(deltaCatY);
+            if (!isVisible(client) &&
+                distCatX >= MOUSE_HIDDEN_DISTANCE + MOUSE_STOP_FLEEING_DIST_MALUS &&
+                distCatY >= MOUSE_HIDDEN_DISTANCE + MOUSE_STOP_FLEEING_DIST_MALUS &&
+                Math.random() < MOUSE_STAY_HIDDEN_PROB) {
+              client.botMouseData.state = mouseAIState.MAI_HIDING;
+            }
+            else if (distCatX >= MOUSE_VISIBLE_DISTANCE + MOUSE_STOP_FLEEING_DIST_MALUS &&
+                     distCatY >= MOUSE_VISIBLE_DISTANCE + MOUSE_STOP_FLEEING_DIST_MALUS) {
+              if (!isVisible(client) && Math.random() < MOUSE_STAY_HIDDEN_PROB) {
+                client.botMouseData.state = mouseAIState.MAI_HIDING;
+              } else {
+                client.botMouseData.state = mouseAIState.MAI_MOVING;
+                findMouseTargetPosition(client);
+              }
+            } else {
+              // TODO
+              // trouver une fonction continue de ma position, de celle du chat et
+              // de son u,v qui me sort une position target correcte ?
+              // faire des feintes ?
+              if (deltaCatX >= 0) {
+                j.u = 1;
+              } else if (deltaCatX < 0) {
+                j.u = -1;
+              }
+              if (deltaCatY >= 0) {
+                j.v = 1;
+              } else if (deltaCatY < 0) {
+                j.v = -1;
+              }
+            }
+            // update mouse appearance
+            var tile = botMouse_GetNewAppearance(client);
+            if (tile != null) {
+              j.t = tile;
+            }
+          }
+          break;
       }
     }
     processClientInput(client, j);
   }
+}
+
+function randomPos() {
+  return { x: Math.floor(Math.random() * S.W), y: Math.floor(Math.random() * S.H) };
+}
+
+// calculate a correct new target pos for a mouse bot
+function findMouseTargetPosition(mouseBot) {
+  // placeholder : random pos
+  var pos = randomPos();
+  mouseBot.botMouseData.targetX = pos.x;
+  mouseBot.botMouseData.targetY = pos.y;
+}
+
+function initMouseBot(bot) {
+  delete bot.botMouseData;
+  delete bot.botCatData;
+  bot.botMouseData = {
+    state: mouseAIState.MAI_MOVING,
+    targetX: 0,
+    targetY: 0
+  };
+  findMouseTargetPosition(bot);
+}
+  
+function initCatBot(bot) {
+  delete bot.botMouseData;
+  delete bot.botCatData;
+  var pos = randomPos();
+  bot.botCatData = {
+    state: catAIState.CAI_IDLE,
+    targetX: pos.x,
+    targetY: pos.y,
+    target: undefined,
+    changeTargetTimer: 0,
+    refreshTargetTimer: 0,
+    targetTile: '.'
+  };
+
 }
 
 function manageBotsNumber()
@@ -558,9 +871,15 @@ function addBot() {
   bot.send = function(e) {
   };
   
+  initMouseBot(bot);
+  
   addToLog(bot.name + " joins!");
   
 }
+
+//////////////////////////////
+//  END BOT CODE SECTION
+//////////////////////////////
 
 var wss = new ws.Server({server: server});
 wss.on('connection', function(client) {
