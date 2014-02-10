@@ -112,6 +112,16 @@ function newPlayer(map, X, Y) {
   return player;
 }
 
+function setMusic() {
+  if (player && player.cat == true) {
+    $("#MusicCat")[0].volume = 1;
+    $("#MusicMice")[0].volume = 0;
+  } else {
+    $("#MusicCat")[0].volume = 0;
+    $("#MusicMice")[0].volume = 1;
+  }
+}
+
 function netUpdatePlayer(data) {
   if (players[data.id] === undefined) {
     players[data.id] = newPlayer(map, data.x, data.y);
@@ -138,6 +148,7 @@ function netUpdatePlayer(data) {
     delete players[data.id].cat;
   }
   players[data.id].update();
+  setMusic();
 }
 
 setInterval(function() {
@@ -152,6 +163,8 @@ setInterval(function() {
 }, 1000);
 
 $(document).ready(function() {
+
+  $("#MusicCat")[0].volume = 0;
 
   var name = prompt("What's your nickname?");
   if (name === null || name === "") {
